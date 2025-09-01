@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"components/cosmicfocus.js -> lenis":{"id":1723,"files":["static/chunks/723.662fccaa0859b49c.js"]},"pages/login.js -> three":{"id":4796,"files":["static/chunks/69b51223-5625e35d20d4da69.js"]},"pages/progress.js -> lenis":{"id":1723,"files":["static/chunks/723.662fccaa0859b49c.js"]}}';
