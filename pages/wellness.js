@@ -1,5 +1,5 @@
 // pages/wellness.js
-import CosmicFocus from '../components/CosmicFocus';
+import CosmicFocus from '../components/cosmicfocus';
 import Head from 'next/head';
 
 export default function WellnessPage() {

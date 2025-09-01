@@ -2,8 +2,6 @@ import { useState } from 'react';
 import Head from 'next/head';
 import AIQuestionGenerator from '../components/AIQuestionGenerator';
 import QuestionForm from '../components/QuestionForm';
-import QuestionList from '../components/QuestionList';
-
 const QuestionsPage = () => {
   const [activeTab, setActiveTab] = useState('generate');
 
