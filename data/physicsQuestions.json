@@ -1,0 +1,98 @@
+{
+    "2023": [
+      {
+        "id": 1,
+        "question": "A particle moves in a straight line with a constant acceleration. If it covers 10 m in the first second and 20 m in the next second, what is its acceleration?",
+        "options": ["5 m/s²", "10 m/s²", "15 m/s²", "20 m/s²"],
+        "correctAnswer": 1
+      },
+      {
+        "id": 2,
+        "question": "Which of the following is a vector quantity?",
+        "options": ["Mass", "Temperature", "Force", "Speed"],
+        "correctAnswer": 2
+      },
+      {
+        "id": 3,
+        "question": "What is the SI unit of electric current?",
+        "options": ["Volt", "Ampere", "Ohm", "Coulomb"],
+        "correctAnswer": 1
+      },
+      {
+        "id": 4,
+        "question": "A ball is thrown vertically upwards with a velocity of 20 m/s. How high will it go? (g = 10 m/s²)",
+        "options": ["10 m", "20 m", "30 m", "40 m"],
+        "correctAnswer": 1
+      },
+      {
+        "id": 5,
+        "question": "Which law states that the pressure of a given mass of gas is inversely proportional to its volume at constant temperature?",
+        "options": ["Boyle's Law", "Charles's Law", "Gay-Lussac's Law", "Avogadro's Law"],
+        "correctAnswer": 0
+      }
+    ],
+    "2022": [
+      {
+        "id": 1,
+        "question": "What is the dimensional formula of force?",
+        "options": ["[MLT⁻²]", "[ML²T⁻²]", "[MLT⁻¹]", "[M²LT⁻²]"],
+        "correctAnswer": 0
+      },
+      {
+        "id": 2,
+        "question": "Which of the following is not a conservative force?",
+        "options": ["Gravitational force", "Electrostatic force", "Frictional force", "Elastic spring force"],
+        "correctAnswer": 2
+      },
+      {
+        "id": 3,
+        "question": "The refractive index of water is 1.33. What is the speed of light in water?",
+        "options": ["2.25 × 10⁸ m/s", "2.5 × 10⁸ m/s", "3.0 × 10⁸ m/s", "4.0 × 10⁸ m/s"],
+        "correctAnswer": 0
+      },
+      {
+        "id": 4,
+        "question": "Which principle is used in the working of a hydraulic lift?",
+        "options": ["Bernoulli's principle", "Pascal's law", "Archimedes' principle", "Newton's third law"],
+        "correctAnswer": 1
+      },
+      {
+        "id": 5,
+        "question": "What is the unit of electric potential difference?",
+        "options": ["Joule", "Watt", "Volt", "Ampere"],
+        "correctAnswer": 2
+      }
+    ],
+    "2021": [
+      {
+        "id": 1,
+        "question": "Which of the following has the highest resistivity?",
+        "options": ["Copper", "Silver", "Constantan", "Gold"],
+        "correctAnswer": 2
+      },
+      {
+        "id": 2,
+        "question": "The phenomenon of electromagnetic induction was discovered by:",
+        "options": ["Faraday", "Oersted", "Ampere", "Maxwell"],
+        "correctAnswer": 0
+      },
+      {
+        "id": 3,
+        "question": "What is the value of acceleration due to gravity on the surface of the moon?",
+        "options": ["1.6 m/s²", "3.7 m/s²", "5.2 m/s²", "9.8 m/s²"],
+        "correctAnswer": 0
+      },
+      {
+        "id": 4,
+        "question": "Which of the following is not an electromagnetic wave?",
+        "options": ["X-rays", "Gamma rays", "Sound waves", "Radio waves"],
+        "correctAnswer": 2
+      },
+      {
+        "id": 5,
+        "question": "The SI unit of magnetic flux is:",
+        "options": ["Tesla", "Weber", "Henry", "Gauss"],
+        "correctAnswer": 1
+      }
+    ]
+  }
