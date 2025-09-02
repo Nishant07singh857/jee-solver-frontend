@@ -29,6 +29,8 @@ const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sor
 
 // Use environment variable for backend URL with fallback
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+const response = await axios.get(`${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
+
 
 // Predefined particle positions to avoid hydration mismatch
 const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
