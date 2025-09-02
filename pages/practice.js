@@ -28,8 +28,12 @@ const COACHING_INSTITUTES = ['FIITJEE', 'Allen', 'Resonance', 'Vibrant Academy',
 const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sort((a, b) => b - a);
 
 // Use environment variable for backend URL with fallback
+<<<<<<< HEAD
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
 
+=======
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+>>>>>>> d2e8256ea7620c0d258dfd1022af06381acfc6ea
 // Predefined particle positions to avoid hydration mismatch
 const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
   top: `${(i * 13 + 7) % 100}%`,

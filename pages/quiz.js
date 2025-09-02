@@ -8,7 +8,11 @@ import { auth, db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // Use environment variable for backend URL with fallback
+<<<<<<< HEAD
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
+=======
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+>>>>>>> d2e8256ea7620c0d258dfd1022af06381acfc6ea
 const QuizPage = () => {
     const [quizData, setQuizData] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
