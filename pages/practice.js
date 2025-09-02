@@ -27,9 +27,9 @@ const PYQ_YEARS = [2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
 const COACHING_INSTITUTES = ['FIITJEE', 'Allen', 'Resonance', 'Vibrant Academy', 'Motion', 'Aakash'];
 const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sort((a, b) => b - a);
 
-// Use environment variable for backend URL with fallback
-<<<<<<< HEAD
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
+// Use environment variable for backend URL with fallbackconst
+BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+
 
 // Predefined particle positions to avoid hydration mismatch
 const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
