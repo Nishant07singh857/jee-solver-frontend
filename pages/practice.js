@@ -28,8 +28,7 @@ const COACHING_INSTITUTES = ['FIITJEE', 'Allen', 'Resonance', 'Vibrant Academy',
 const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sort((a, b) => b - a);
 
 // Use environment variable for backend URL with fallback
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
 // Predefined particle positions to avoid hydration mismatch
 const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
   top: `${(i * 13 + 7) % 100}%`,
@@ -127,15 +126,13 @@ const PracticePage = () => {
         setLoading(true);
         setError('');
         try {
-            console.log('Fetching topics from:', `${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
             const response = await axios.get(`${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
-            console.log('Topics API response:', response.data);
-            setTopics(response.data.topics || []);
+            setTopics(response.data.topics);
             setNavigationStack([...navigationStack, step]);
             setStep(2);
         } catch (err) {
-            console.error('Error fetching topics:', err);
             setError('Could not load topics. Please ensure the backend is running and the URL is correct.');
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -235,24 +232,16 @@ const PracticePage = () => {
         setLoading(true);
         setError('');
         try {
-            console.log('Generating quiz with:', {
-                subject: selectedSubject.name,
-                mode: mode.mode,
-                topic: topic,
-            });
-            
             const response = await axios.post(`${BACKEND_API_URL}/questions/generate-quiz`, {
                 subject: selectedSubject.name,
                 mode: mode.mode,
                 topic: topic,
             });
-            
-            console.log('Quiz generated successfully:', response.data);
             sessionStorage.setItem('currentQuiz', JSON.stringify(response.data));
             router.push('/quiz');
         } catch (err) {
-            console.error('Error generating quiz:', err);
             setError(err.response?.data?.detail || 'Failed to generate quiz. Please try again.');
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -323,14 +312,14 @@ const PracticePage = () => {
                         background-color: rgba(255, 255, 255, 0.05);
                         padding: 0.5rem 1rem;
                         border-radius: 0.5rem;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border: 1px solid rgba(255, 极55, 255, 0.1);
                         transition: all 0.3s ease;
                         cursor: pointer;
                     }
                     
                     .back-button:hover {
                         color: #93c5fd;
-                        border-color: rgba(96, 165, 250, 极.3);
+                        border-color: rgba(96, 165, 250, 0.3);
                     }
                     
                     .title {
@@ -343,7 +332,7 @@ const PracticePage = () => {
                         background-clip: text;
                     }
                     
-                    @media (min-width: 640px) {
+                    @media (min-width: 640极) {
                         .title {
                             font-size: 2.5rem;
                         }
@@ -472,7 +461,7 @@ const PracticePage = () => {
                         gap: 0.75rem;
                     }
                     
-                    @media (min-width: 768极) {
+                    @media (min-width: 768px) {
                         .topics-grid, .years-grid, .institutes-grid, .json-years-grid {
                             grid-template-columns: repeat(3, 1fr);
                         }
@@ -568,7 +557,7 @@ const PracticePage = () => {
                         position: absolute;
                         width: 6px;
                         height: 6px;
-                        background-color: rgba(255, 255, 255, 0.1);
+                        background-color: rgba(255, 255, 255, 极.1);
                         border-radius: 50%;
                         z-index: 0;
                     }
@@ -669,7 +658,7 @@ const PracticePage = () => {
 
                     {step === 2 && (
                          <div className="step-container">
-                            <p className="step-description">Practicing {selectedSubject?.name}</p>
+                            <p className="step-description">Practicing {selectedSubject.name}</p>
                             <p className="sub-step-description">Select your preferred practice mode</p>
                             <div className="modes-container">
                                 {PRACTICE_MODES.map(mode => (
@@ -692,7 +681,7 @@ const PracticePage = () => {
 
                     {step === 3 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject?.name} Practice</p>
+                            <p className="step-description">{selectedSubject.name} Practice</p>
                             <p className="sub-step-description">Select a topic to focus on</p>
                             <div className="topics-grid">
                                 {topics.map(topic => (
@@ -710,7 +699,7 @@ const PracticePage = () => {
 
                     {step === 4 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject?.name} Previous Year Questions</p>
+                            <p className="step-description">{selectedSubject.name} Previous Year Questions</p>
                             <p className="sub-step-description">Select a year to practice</p>
                             <div className="years-grid">
                                 {PYQ_YEARS.map(year => (
@@ -729,7 +718,7 @@ const PracticePage = () => {
 
                     {step === 5 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject?.name} Coaching Modal Papers</p>
+                            <p className="step-description">{selectedSubject.name} Coaching Modal Papers</p>
                             <p className="sub-step-description">Select a coaching institute</p>
                             <div className="institutes-grid">
                                 {COACHING_INSTITUTES.map(institute => (
@@ -748,7 +737,7 @@ const PracticePage = () => {
 
                     {step === 6 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject?.name} JSON Question Bank</p>
+                            <p className="step-description">{selectedSubject.name} JSON Question Bank</p>
                             <p className="sub-step-description">Select a year to practice</p>
                             <div className="json-years-grid">
                                 {JSON_YEARS.map(year => (
