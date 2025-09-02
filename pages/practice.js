@@ -28,9 +28,7 @@ const COACHING_INSTITUTES = ['FIITJEE', 'Allen', 'Resonance', 'Vibrant Academy',
 const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sort((a, b) => b - a);
 
 // Use environment variable for backend URL with fallback
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
-const response = await axios.get(`${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
-
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
 
 // Predefined particle positions to avoid hydration mismatch
 const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
@@ -129,13 +127,15 @@ const PracticePage = () => {
         setLoading(true);
         setError('');
         try {
+            console.log('Fetching topics from:', `${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
             const response = await axios.get(`${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
-            setTopics(response.data.topics);
+            console.log('Topics API response:', response.data);
+            setTopics(response.data.topics || []);
             setNavigationStack([...navigationStack, step]);
             setStep(2);
         } catch (err) {
+            console.error('Error fetching topics:', err);
             setError('Could not load topics. Please ensure the backend is running and the URL is correct.');
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -235,16 +235,24 @@ const PracticePage = () => {
         setLoading(true);
         setError('');
         try {
+            console.log('Generating quiz with:', {
+                subject: selectedSubject.name,
+                mode: mode.mode,
+                topic: topic,
+            });
+            
             const response = await axios.post(`${BACKEND_API_URL}/questions/generate-quiz`, {
                 subject: selectedSubject.name,
                 mode: mode.mode,
                 topic: topic,
             });
+            
+            console.log('Quiz generated successfully:', response.data);
             sessionStorage.setItem('currentQuiz', JSON.stringify(response.data));
             router.push('/quiz');
         } catch (err) {
+            console.error('Error generating quiz:', err);
             setError(err.response?.data?.detail || 'Failed to generate quiz. Please try again.');
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -315,7 +323,7 @@ const PracticePage = () => {
                         background-color: rgba(255, 255, 255, 0.05);
                         padding: 0.5rem 1rem;
                         border-radius: 0.5rem;
-                        border: 1px solid rgba(255, 极55, 255, 0.1);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
                         transition: all 0.3s ease;
                         cursor: pointer;
                     }
@@ -335,7 +343,7 @@ const PracticePage = () => {
                         background-clip: text;
                     }
                     
-                    @media (min-width: 640极) {
+                    @media (min-width: 640px) {
                         .title {
                             font-size: 2.5rem;
                         }
@@ -371,7 +379,7 @@ const PracticePage = () => {
                     }
                     
                     .subject-card {
-                        background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
+                        background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 极.1));
                         border: 1px solid rgba(255, 255, 255, 0.1);
                         border-radius: 1rem;
                         padding: 2rem;
@@ -560,7 +568,7 @@ const PracticePage = () => {
                         position: absolute;
                         width: 6px;
                         height: 6px;
-                        background-color: rgba(255, 255, 255, 极.1);
+                        background-color: rgba(255, 255, 255, 0.1);
                         border-radius: 50%;
                         z-index: 0;
                     }
