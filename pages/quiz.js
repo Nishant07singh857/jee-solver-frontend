@@ -1,795 +1,941 @@
-import React, { useState, useEffect, useRef } from 'react';
+// pages/quiz.js
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { gsap } from 'gsap';
-import { ArrowLeft, Atom, FlaskConical, Sigma, PlayCircle, FileText, Target, Loader, BookOpen, Award, Calendar, Database } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Clock, Lightbulb, Sparkles, Bookmark, Home, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-
-// Import your JSON question data
-import physicsQuestions from '../data/physicsQuestions.json';
-
-const SUBJECTS = [
-    { name: 'Physics', icon: <Atom size={48} />, color: 'text-blue-400', bgColor: 'hover:bg-blue-500/10', borderColor: 'hover:border-blue-500/50', gradient: 'from-blue-500/20 to-violet-500/10' },
-    { name: 'Chemistry', icon: <FlaskConical size={48} />, color: 'text-green-400', bgColor: 'hover:bg-green-500/10', borderColor: 'hover:border-green-500/50', gradient: 'from-green-500/20 to-emerald-500/10' },
-    { name: 'Maths', icon: <Sigma size={48} />, color: 'text-orange-400', bgColor: 'hover:bg-orange-500/10', borderColor: 'hover:border-orange-500/50', gradient: 'from-orange-500/20 to-amber-500/10' },
-];
-
-const PRACTICE_MODES = [
-    { name: 'Quick Quiz', mode: 'quick', description: 'A short, 5-question quiz on random topics.', icon: <PlayCircle size={24} /> },
-    { name: 'Topic-wise Practice', mode: 'topic', description: 'A 10-question quiz on your chosen topic.', icon: <Target size={24} /> },
-    { name: 'Full Mock Test', mode: 'full', description: 'A 30-question test simulating a full exam section.', icon: <FileText size={24} /> },
-    { name: 'Previous Year Papers', mode: 'pyq', description: 'Practice with questions from actual JEE exams.', icon: <BookOpen size={24} /> },
-    { name: 'Coaching Modal Papers', mode: 'coaching', description: 'Mock papers released by top coaching institutes.', icon: <Award size={24} /> },
-    { name: 'JSON Question Bank', mode: 'json', description: 'Practice with questions from our curated database.', icon: <Database size={24} /> },
-];
-
-const PYQ_YEARS = [2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
-const COACHING_INSTITUTES = ['FIITJEE', 'Allen', 'Resonance', 'Vibrant Academy', 'Motion', 'Aakash'];
-const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sort((a, b) => b - a);
+import { auth, db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // Use environment variable for backend URL with fallback
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
+const response = await fetch('https://your-backend-service.vercel.app/api/topics');
 
-// Predefined particle positions to avoid hydration mismatch
-const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
-  top: `${(i * 13 + 7) % 100}%`,
-  left: `${(i * 17 + 23) % 100}%`,
-  opacity: (i % 10) * 0.03 + 0.1,
-  width: `${(i % 8) + 2}px`,
-  height: `${(i % 7) + 2}px`,
-}));
 
-const PracticePage = () => {
-    const [step, setStep] = useState(1);
-    const [selectedSubject, setSelectedSubject] = useState(null);
-    const [selectedMode, setSelectedMode] = useState(null);
-    const [topics, setTopics] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [selectedYear, setSelectedYear] = useState(null);
-    const [selectedInstitute, setSelectedInstitute] = useState(null);
-    const [isClient, setIsClient] = useState(false);
-    const [navigationStack, setNavigationStack] = useState([]);
+const QuizPage = () => {
+    const [quizData, setQuizData] = useState(null);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [userAnswers, setUserAnswers] = useState({});
+    const [bookmarks, setBookmarks] = useState({});
+    const [timeLeft, setTimeLeft] = useState(30 * 60);
+    const [showHint, setShowHint] = useState(false);
+    const [explanation, setExplanation] = useState(null);
+    const [loadingExplanation, setLoadingExplanation] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [quizStartedAt, setQuizStartedAt] = useState(null);
+
     const router = useRouter();
-    const containerRef = useRef(null);
-    const particlesRef = useRef([]);
-    const lightsRef = useRef([]);
 
     useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    useEffect(() => {
-        if (!isClient) return;
-
-        const initAnimations = () => {
-            lightsRef.current.forEach((light, index) => {
-                if (light) {
-                    gsap.to(light, {
-                        x: Math.random() * 100 - 50,
-                        y: Math.random() * 100 - 50,
-                        duration: 20 + Math.random() * 10,
-                        repeat: -1,
-                        yoyo: true,
-                        ease: "sine.inOut",
-                        delay: index * 2
-                    });
-                }
-            });
-
-            particlesRef.current.forEach((particle, index) => {
-                if (particle) {
-                    const timeline = gsap.timeline({ repeat: -1 });
-                    
-                    timeline.to(particle, {
-                        x: `+=${Math.random() * 100 - 50}`,
-                        y: `+=${Math.random() * 60 - 30}`,
-                        rotation: Math.random() * 20 - 10,
-                        duration: 30 + Math.random() * 20,
-                        ease: "sine.inOut",
-                    }).to(particle, {
-                        x: `+=${Math.random() * 80 - 40}`,
-                        y: `+=${Math.random() * 40 - 20}`,
-                        rotation: Math.random() * 15 - 7.5,
-                        duration: 25 + Math.random() * 15,
-                        ease: "sine.inOut",
-                    });
-                    
-                    gsap.to(particle, {
-                        opacity: Math.random() * 0.3 + 0.2,
-                        duration: 5 + Math.random() * 10,
-                        repeat: -1,
-                        yoyo: true,
-                        ease: "sine.inOut",
-                        delay: index * 0.5
-                    });
-                }
-            });
-        };
-
-        const timer = setTimeout(initAnimations, 100);
-        return () => clearTimeout(timer);
-    }, [isClient]);
-
-    useEffect(() => {
-        if (!isClient) return;
-        
-        gsap.to(".step-container", {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            ease: 'power3.out'
-        });
-    }, [step, isClient]);
-
-    const handleSubjectSelect = async (subject) => {
-        setSelectedSubject(subject);
-        setLoading(true);
-        setError('');
-        try {
-            console.log('Fetching topics from:', `${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
-            const response = await axios.get(`${BACKEND_API_URL}/questions/topics?subject=${subject.name}`);
-            console.log('Topics API response:', response.data);
-            setTopics(response.data.topics || []);
-            setNavigationStack([...navigationStack, step]);
-            setStep(2);
-        } catch (err) {
-            console.error('Error fetching topics:', err);
-            setError('Could not load topics. Please ensure the backend is running and the URL is correct.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleModeSelect = (mode) => {
-        setSelectedMode(mode);
-        setNavigationStack([...navigationStack, step]);
-        
-        if (mode.mode === 'topic') {
-            setStep(3);
-        } else if (mode.mode === 'pyq') {
-            setStep(4);
-        } else if (mode.mode === 'coaching') {
-            setStep(5);
-        } else if (mode.mode === 'json') {
-            setStep(6);
+        // Load quiz data from session storage
+        const savedQuizData = sessionStorage.getItem('currentQuiz');
+        if (savedQuizData) {
+            try {
+                const data = JSON.parse(savedQuizData);
+                setQuizData(data);
+                setQuizStartedAt(new Date());
+                
+                // Load bookmarks from Firebase
+                loadBookmarks();
+                setLoading(false);
+            } catch (err) {
+                setError('Invalid quiz data format');
+                console.error(err);
+            }
         } else {
-            startQuiz(mode, "random");
+            // Redirect to practice page if no quiz data
+            router.push('/practice');
+        }
+    }, [router]);
+
+    // Load bookmarks from Firebase
+    const loadBookmarks = async () => {
+        try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
+            
+            const bookmarksRef = doc(db, 'userBookmarks', currentUser.uid);
+            const bookmarksDoc = await getDoc(bookmarksRef);
+            
+            if (bookmarksDoc.exists()) {
+                setBookmarks(bookmarksDoc.data());
+            }
+        } catch (error) {
+            console.error("Error loading bookmarks:", error);
         }
     };
 
-    const handleTopicSelect = (topic) => {
-        setNavigationStack([...navigationStack, step]);
-        startQuiz(selectedMode, topic);
-    };
+    useEffect(() => {
+        if (!quizData) return;
+        const timer = setInterval(() => setTimeLeft(prev => (prev > 0 ? prev - 1 : 0)), 1000);
+        return () => clearInterval(timer);
+    }, [quizData]);
 
-    const handleYearSelect = (year) => {
-        setSelectedYear(year);
-        setNavigationStack([...navigationStack, step]);
-        startQuiz(selectedMode, `pyq_${year}`);
-    };
-
-    const handleInstituteSelect = (institute) => {
-        setSelectedInstitute(institute);
-        setNavigationStack([...navigationStack, step]);
-        startQuiz(selectedMode, `coaching_${institute}`);
-    };
-
-    const handleJsonYearSelect = async (year) => {
-        setSelectedYear(year);
-        setNavigationStack([...navigationStack, step]);
-        setLoading(true);
-        
+    const saveQuizResultsToFirebase = async () => {
         try {
-            // Get questions from JSON file
-            const questions = physicsQuestions[year] || [];
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                console.log("User not authenticated, skipping Firebase save");
+                return;
+            }
+
+            // Calculate score and prepare data
+            const totalQuestions = quizData.questions.length;
+            const correctAnswers = Object.values(userAnswers).filter(
+                answer => answer.isCorrect
+            ).length;
+            const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+
+            // Prepare questions data for Firebase
+            const questionsData = quizData.questions.map(q => ({
+                question: q.question,
+                userAnswer: userAnswers[q.id]?.answer || '',
+                correctAnswer: q.correctAnswer,
+                isCorrect: userAnswers[q.id]?.isCorrect || false,
+                options: q.options,
+                hint: q.hint || '',
+                subject: quizData.subject || 'General',
+                topic: q.topic || 'Unknown'
+            }));
+
+            // Save to Firestore
+            const quizResultsRef = collection(db, 'quizResults');
+            await addDoc(quizResultsRef, {
+                userId: currentUser.uid,
+                quizTitle: quizData.quizTitle || 'Quick Quiz',
+                totalQuestions,
+                correctAnswers,
+                accuracy,
+                timeSpent: 30 * 60 - timeLeft, // in seconds
+                completedAt: serverTimestamp(),
+                startedAt: quizStartedAt,
+                questions: questionsData,
+                subject: quizData.subject || 'General',
+                difficulty: quizData.difficulty || 'Medium'
+            });
+
+            console.log("Quiz results saved to Firebase successfully");
+
+        } catch (error) {
+            console.error("Error saving quiz results to Firebase:", error);
+        }
+    };
+
+    // Save bookmarks to Firebase
+    const saveBookmarksToFirebase = async (bookmarksData) => {
+        try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
             
-            // Enhance questions with AI explanations
-            const enhancedQuestions = await Promise.all(
-                questions.map(async (question) => {
-                    try {
-                        // Generate explanation using AI
-                        const response = await axios.post(`${BACKEND_API_URL}/questions/generate-explanation`, {
-                            question: question.question,
-                            options: question.options,
-                            correctAnswer: question.options[question.correctAnswer],
-                            userAnswer: "" // Empty for initial generation
-                        });
-                        
-                        return {
-                            ...question,
-                            explanation: response.data.explanation,
-                            hint: "Review the related concepts to understand this question better."
-                        };
-                    } catch (error) {
-                        console.error("Failed to generate explanation:", error);
-                        // Fallback to basic explanation if AI fails
-                        return {
-                            ...question,
-                            explanation: `The correct answer is ${question.options[question.correctAnswer]}.`,
-                            hint: "Review the related concepts to understand this question better."
-                        };
-                    }
-                })
-            );
-            
-            const quizData = {
-                subject: selectedSubject.name,
-                mode: 'json',
-                topic: `json_${year}`,
-                questions: enhancedQuestions,
-                quizTitle: `${selectedSubject.name} ${year} Questions`
+            const bookmarksRef = doc(db, 'userBookmarks', currentUser.uid);
+            await setDoc(bookmarksRef, bookmarksData, { merge: true });
+        } catch (error) {
+            console.error("Error saving bookmarks:", error);
+        }
+    };
+
+    const recordProgress = (questionId, isCorrect, isBookmarked) => {
+        // Backend ko progress save karne ke liye data bhejta hai
+        axios.post(`${BACKEND_API_URL}/questions/record-progress`, {
+            questionId: questionId.toString(),
+            isCorrect: Boolean(isCorrect),
+            isBookmarked: Boolean(isBookmarked)
+        }).catch(err => console.log("Failed to record progress:", err));
+    };
+
+    const handleAnswerSelect = (questionId, option) => {
+        if (userAnswers[questionId]) return;
+        
+        const currentQuestion = quizData.questions[currentQuestionIndex];
+        const isCorrect = option === currentQuestion.correctAnswer;
+        
+        console.log("Answer selected:", { 
+            questionId, 
+            option, 
+            correctAnswer: currentQuestion.correctAnswer, 
+            isCorrect 
+        });
+        
+        // Update user answers
+        setUserAnswers(prev => ({ 
+            ...prev, 
+            [questionId]: { 
+                answer: option, 
+                isCorrect: isCorrect 
+            } 
+        }));
+        
+        // Record progress (non-blocking)
+        recordProgress(questionId, isCorrect, !!bookmarks[questionId]);
+        
+        // Load explanation
+        setLoadingExplanation(true);
+        axios.post(`${BACKEND_API_URL}/questions/generate-explanation`, {
+            question: currentQuestion.question,
+            options: currentQuestion.options,
+            correctAnswer: currentQuestion.correctAnswer,
+            userAnswer: option
+        }).then(response => {
+            setExplanation(response.data.explanation);
+        }).catch(err => {
+            console.error("Explanation error:", err);
+            setExplanation("Could not load explanation. The AI service might be unavailable.");
+        }).finally(() => {
+            setLoadingExplanation(false);
+        });
+    };
+
+    const toggleBookmark = async (questionId) => {
+        const currentQuestion = quizData.questions.find(q => q.id === questionId);
+        if (!currentQuestion) return;
+        
+        const newBookmarkState = !bookmarks[questionId];
+        const updatedBookmarks = { ...bookmarks, [questionId]: newBookmarkState };
+        
+        setBookmarks(updatedBookmarks);
+        
+        // Save to Firebase
+        await saveBookmarksToFirebase(updatedBookmarks);
+        
+        // If user has answered, record progress with updated bookmark status
+        if (userAnswers[questionId]) {
+            recordProgress(questionId, userAnswers[questionId].isCorrect, newBookmarkState);
+        }
+        
+        // Add question details to bookmark if it's being bookmarked
+        if (newBookmarkState) {
+            const bookmarkDetails = {
+                question: currentQuestion.question,
+                options: currentQuestion.options,
+                correctAnswer: currentQuestion.correctAnswer,
+                hint: currentQuestion.hint || '',
+                subject: quizData.subject || 'General',
+                topic: currentQuestion.topic || 'Unknown',
+                bookmarkedAt: new Date().toISOString()
             };
             
-            sessionStorage.setItem('currentQuiz', JSON.stringify(quizData));
-            router.push('/quiz');
-        } catch (error) {
-            setError('Failed to load questions. Please try again.');
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    const startQuiz = async (mode, topic) => {
-        setLoading(true);
-        setError('');
-        try {
-            console.log('Generating quiz with:', {
-                subject: selectedSubject.name,
-                mode: mode.mode,
-                topic: topic,
-            });
-            
-            const response = await axios.post(`${BACKEND_API_URL}/questions/generate-quiz`, {
-                subject: selectedSubject.name,
-                mode: mode.mode,
-                topic: topic,
-            });
-            
-            console.log('Quiz generated successfully:', response.data);
-            sessionStorage.setItem('currentQuiz', JSON.stringify(response.data));
-            router.push('/quiz');
-        } catch (err) {
-            console.error('Error generating quiz:', err);
-            setError(err.response?.data?.detail || 'Failed to generate quiz. Please try again.');
-        } finally {
-            setLoading(false);
+            const detailedBookmarks = { 
+                ...updatedBookmarks, 
+                [questionId]: bookmarkDetails 
+            };
+            await saveBookmarksToFirebase(detailedBookmarks);
         }
     };
 
-    const goBack = () => {
-        if (navigationStack.length > 0) {
-            const previousStep = navigationStack[navigationStack.length - 1];
-            setNavigationStack(navigationStack.slice(0, -1));
-            setStep(previousStep);
-            setError('');
+    const goToNextQuestion = async () => {
+        if (currentQuestionIndex < quizData.questions.length - 1) {
+            setShowHint(false);
+            setExplanation(null);
+            setCurrentQuestionIndex(prev => prev + 1);
         } else {
-            router.push('/dashboard');
+            // Quiz complete - save results to Firebase
+            await saveQuizResultsToFirebase();
+            
+            sessionStorage.removeItem('currentQuiz');
+            router.push('/results');
         }
     };
 
-    return (
-        <>
-            <Head>
-                <title>Start Practice | JEE Solver</title>
-                <style>{`
-                    * {
-                        margin: 0;
-                        padding: 0;
-                        box-sizing: border-box;
-                    }
-                    
-                    body {
-                        font-family: 'Inter', sans-serif;
+    const goToPreviousQuestion = () => {
+        if (currentQuestionIndex > 0) {
+            setShowHint(false);
+            setExplanation(null);
+            setCurrentQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    const goToDashboard = () => {
+        router.push('/dashboard');
+    };
+
+    const goToPractice = () => {
+        router.push('/practice');
+    };
+
+    const goToRevision = () => {
+        router.push('/revision');
+    };
+
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    if (loading) {
+        return (
+            <div className="quiz-container">
+                <Head>
+                    <title>Loading Quiz | JEE Solver</title>
+                </Head>
+                <div className="loading-spinner">
+                    <div className="spinner"></div>
+                    <p>Loading quiz questions...</p>
+                </div>
+                <style jsx>{`
+                    .quiz-container {
+                        min-height: 100vh;
                         background-color: #0f172a;
                         color: #e2e8f0;
-                        overflow-x: hidden;
-                    }
-                    
-                    .app-container {
-                        min-height: 100vh;
-                        padding: 1rem;
-                        position: relative;
-                        overflow: hidden;
-                    }
-                    
-                    @media (min-width: 640px) {
-                        .app-container {
-                            padding: 2rem;
-                        }
-                    }
-                    
-                    .max-width-container {
-                        max-width: 72rem;
-                        margin-left: auto;
-                        margin-right: auto;
-                        position: relative;
-                        z-index: 10;
-                    }
-                    
-                    .header {
                         display: flex;
+                        justify-content: center;
                         align-items: center;
-                        justify-content: space-between;
-                        margin-bottom: 2.5rem;
                     }
                     
-                    .back-button {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                        color: #60a5fa;
-                        background-color: rgba(255, 255, 255, 0.05);
-                        padding: 0.5rem 1rem;
-                        border-radius: 0.5rem;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        transition: all 0.3s ease;
-                        cursor: pointer;
-                    }
-                    
-                    .back-button:hover {
-                        color: #93c5fd;
-                        border-color: rgba(96, 165, 250, 0.3);
-                    }
-                    
-                    .title {
-                        font-size: 2.25rem;
-                        font-weight: 900;
-                        text-align: center;
-                        background-image: linear-gradient(to right, #60a5fa, #a78bfa);
-                        -webkit-background-clip: text;
-                        -webkit-text-fill-color: transparent;
-                        background-clip: text;
-                    }
-                    
-                    @media (min-width: 640px) {
-                        .title {
-                            font-size: 2.5rem;
-                        }
-                    }
-                    
-                    .placeholder {
-                        width: 4rem;
-                    }
-                    
-                    .step-description {
-                        text-align: center;
-                        color: #94a3b8;
-                        margin-bottom: 2rem;
-                        font-size: 1.125rem;
-                    }
-                    
-                    .sub-step-description {
-                        text-align: center;
-                        color: #64748b;
-                        margin-bottom: 2rem;
-                    }
-                    
-                    .subjects-grid {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                        gap: 1.5rem;
-                    }
-                    
-                    @media (min-width: 768px) {
-                        .subjects-grid {
-                            grid-template-columns: repeat(3, 1fr);
-                        }
-                    }
-                    
-                    .subject-card {
-                        background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 极.1));
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 1rem;
-                        padding: 2rem;
-                        text-align: center;
-                        cursor: pointer;
-                        transition: all 0.5s ease;
-                        backdrop-filter: blur(10px);
-                    }
-                    
-                    .subject-card:hover {
-                        transform: scale(1.02);
-                        box-shadow: 0 0 20px rgba(96, 165, 250, 0.1);
-                    }
-                    
-                    .subject-icon {
-                        display: inline-block;
-                        padding: 1rem;
-                        border-radius: 1rem;
-                        background-color: rgba(0, 0, 0, 0.2);
-                        margin-bottom: 1rem;
-                    }
-                    
-                    .subject-name {
-                        font-size: 1.5rem;
-                        font-weight: 700;
-                        margin-bottom: 0.5rem;
-                    }
-                    
-                    .divider {
-                        height: 0.25rem;
-                        width: 3rem;
-                        border-radius: 0.125rem;
-                        opacity: 0.5;
-                        margin: 1rem auto 0;
-                    }
-                    
-                    .modes-container {
+                    .loading-spinner {
                         display: flex;
                         flex-direction: column;
+                        align-items: center;
                         gap: 1rem;
                     }
                     
-                    .mode-card {
-                        width: 100%;
-                        background: linear-gradient(to right, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 1rem;
-                        padding: 1.5rem;
-                        display: flex;
-                        align-items: center;
-                        gap: 1.5rem;
-                        cursor: pointer;
-                        transition: all 0.5s ease;
-                        backdrop-filter: blur(10px);
-                    }
-                    
-                    .mode-card:hover {
-                        transform: scale(1.01);
-                        border-color: rgba(96, 165, 250, 0.3);
-                        box-shadow: 0 0 20px rgba(96, 165, 250, 0.05);
-                    }
-                    
-                    .mode-icon {
-                        color: #60a5fa;
-                        background-color: rgba(96, 165, 250, 0.1);
-                        padding: 1rem;
-                        border-radius: 0.75rem;
-                        border: 1px solid rgba(96, 165, 250, 0.2);
-                    }
-                    
-                    .mode-content {
-                        text-align: left;
-                    }
-                    
-                    .mode-title {
-                        font-size: 1.25rem;
-                        font-weight: 700;
-                        color: white;
-                        margin-bottom: 0.25rem;
-                    }
-                    
-                    .mode-description {
-                        color: #94a3b8;
-                        font-size: 0.875rem;
-                    }
-                    
-                    .topics-grid, .years-grid, .institutes-grid, .json-years-grid {
-                        display: grid;
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 0.75rem;
-                    }
-                    
-                    @media (min-width: 768px) {
-                        .topics-grid, .years-grid, .institutes-grid, .json-years-grid {
-                            grid-template-columns: repeat(3, 1fr);
-                        }
-                    }
-                    
-                    .topic-button, .year-button, .institute-button, .json-year-button {
-                        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 0.5rem;
-                        padding: 1.25rem;
-                        text-align: center;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        backdrop-filter: blur(10px);
-                    }
-                    
-                    .topic-button:hover, .year-button:hover, .institute-button:hover, .json-year-button:hover {
-                        background-color: rgba(255, 255, 255, 0.1);
-                        border-color: rgba(96, 165, 250, 0.3);
-                        transform: scale(1.02);
-                    }
-                    
-                    .topic-name, .year-name, .institute-name, .json-year-name {
-                        font-size: 1rem;
-                        font-weight: 600;
-                        color: white;
-                    }
-                    
-                    .loading-overlay {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        background-color: rgba(0, 0, 0, 0.7);
-                        backdrop-filter: blur(10px);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 50;
-                    }
-                    
-                    .loading-content {
-                        text-align: center;
-                        padding: 2rem;
-                        background-color: rgba(15, 23, 42, 0.9);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 1rem;
-                        box-shadow: 0 0 30px rgba(96, 165, 250, 0.1);
-                    }
-                    
                     .spinner {
-                        animation: spin 1s linear infinite;
-                        margin: 0 auto 1rem;
-                        color: #60a5fa;
-                    }
-                    
-                    .loading-title {
-                        font-size: 1.25rem;
-                        font-weight: 600;
-                        color: white;
-                        margin-bottom: 0.5rem;
-                    }
-                    
-                    .loading-text {
-                        color: #94a3b8;
-                    }
-                    
-                    .error-message {
-                        position: fixed;
-                        bottom: 1.5rem;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background-color: rgba(127, 29, 29, 0.8);
-                        border: 1px solid rgba(248, 113, 113, 0.3);
-                        color: #fecaca;
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 0.75rem;
-                        backdrop-filter: blur(10px);
-                        animation: fadeIn 0.5s ease-out forwards;
-                        z-index: 100;
-                    }
-                    
-                    .ambient-light {
-                        position: absolute;
+                        width: 50px;
+                        height: 50px;
+                        border: 5px solid rgba(255, 255, 255, 0.1);
                         border-radius: 50%;
-                        filter: blur(60px);
-                        opacity: 0.15;
-                        z-index: 0;
-                    }
-                    
-                    .particle {
-                        position: absolute;
-                        width: 6px;
-                        height: 6px;
-                        background-color: rgba(255, 255, 255, 0.1);
-                        border-radius: 50%;
-                        z-index: 0;
-                    }
-                    
-                    .background-grid {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        z-index: 0;
-                        opacity: 0.03;
-                        background-image: 
-                            linear-gradient(to right, rgba(128, 128, 128, 0.1) 1px, transparent 1px),
-                            linear-gradient(to bottom, rgba(128, 128, 128, 0.1) 1px, transparent 1px);
-                        background-size: 24px 24px;
-                    }
-                    
-                    .year-icon, .institute-icon, .json-year-icon {
-                        margin-bottom: 0.5rem;
-                        color: #60a5fa;
+                        border-top-color: #3b82f6;
+                        animation: spin 1s ease-in-out infinite;
                     }
                     
                     @keyframes spin {
-                        from { transform: rotate(0deg); }
                         to { transform: rotate(360deg); }
                     }
-                    
-                    @keyframes fadeIn {
-                        from { opacity: 0; transform: translate(-50%, 10px); }
-                        to { opacity: 1; transform: translate(-50%, 0); }
+                `}</style>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="quiz-container">
+                <Head>
+                    <title>Error | JEE Solver</title>
+                </Head>
+                <div className="error-message">
+                    <p>{error}</p>
+                    <button onClick={() => window.location.reload()}>Try Again</button>
+                </div>
+                <style jsx>{`
+                    .quiz-container {
+                        min-height: 100vh;
+                        background-color: #0f172a;
+                        color: #e2e8f0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
                     }
                     
-                    .step-container {
-                        opacity: 0;
-                        transform: translateY(20px);
+                    .error-message {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 1rem;
+                    }
+                    
+                    .error-message button {
+                        background: #3b82f6;
+                        color: white;
+                        border: none;
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
                     }
                 `}</style>
+            </div>
+        );
+    }
+
+    if (!quizData) {
+        return (
+            <div className="quiz-container">
+                <Head>
+                    <title>Error | JEE Solver</title>
+                </Head>
+                <div className="error-message">
+                    <p>No quiz data available.</p>
+                </div>
+                <style jsx>{`
+                    .quiz-container {
+                        min-height: 100vh;
+                        background-color: #0f172a;
+                        color: #e2e8f0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    const currentQuestion = quizData.questions[currentQuestionIndex];
+    const answered = userAnswers[currentQuestion.id];
+    const isBookmarked = bookmarks[currentQuestion.id];
+    const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
+    const isFirstQuestion = currentQuestionIndex === 0;
+    const isLastQuestion = currentQuestionIndex === quizData.questions.length - 1;
+
+    return (
+        <div className="quiz-container">
+            <Head>
+                <title>{quizData.quizTitle || 'AI Quiz'} | JEE Solver</title>
             </Head>
             
-            <div className="app-container" ref={containerRef}>
-                <div ref={el => lightsRef.current[0] = el} className="ambient-light -top-20 -left-20 w-80 h-80 bg-blue-500"></div>
-                <div ref={el => lightsRef.current[1] = el} className="ambient-light -bottom-20 -right-20 w-80 h-80 bg-purple-500"></div>
-                <div ref={el => lightsRef.current[2] = el} className="ambient-light top-1/2 right-1/4 w-60 h-60 bg-cyan-500"></div>
-                
-                {PREDEFINED_PARTICLES.map((particle, i) => (
-                    <div 
-                        key={i}
-                        ref={el => particlesRef.current[i] = el}
-                        className="particle"
-                        style={{
-                            top: particle.top,
-                            left: particle.left,
-                            opacity: particle.opacity,
-                            width: particle.width,
-                            height: particle.height,
-                        }}
-                    ></div>
-                ))}
-                
-                <div className="max-width-container">
-                    <div className="header">
-                         <button onClick={goBack} className="back-button">
-                            <ArrowLeft size={18} /> Back
-                        </button>
-                        <h1 className="title">Start Practice</h1>
-                        <div className="placeholder"></div>
+            <div className="quiz-header">
+                <div className="header-left">
+                    <button className="back-button" onClick={goToPractice} title="Back to Practice">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <h1 className="quiz-title">{quizData.quizTitle}</h1>
+                </div>
+                <div className="header-right">
+                    <div className="timer">
+                        <Clock size={20} />
+                        <span>{formatTime(timeLeft)}</span>
                     </div>
+                    <button className="revision-button" onClick={goToRevision} title="View Bookmarks">
+                        <Bookmark size={20} />
+                        <span className="bookmark-count">{Object.keys(bookmarks).length}</span>
+                    </button>
+                    <button className="dashboard-button" onClick={goToDashboard} title="Back to Dashboard">
+                        <Home size={20} />
+                    </button>
+                </div>
+            </div>
 
-                    {step === 1 && (
-                        <div className="step-container">
-                            <p className="step-description">Choose your subject to begin</p>
-                            <div className="subjects-grid">
-                                {SUBJECTS.map(subject => (
-                                    <div 
-                                        key={subject.name} 
-                                        onClick={() => handleSubjectSelect(subject)}
-                                        className="subject-card"
-                                        style={{
-                                            backgroundColor: subject.name === 'Physics' ? 'rgba(59, 130, 246, 0.2)' : 
-                                                              subject.name === 'Chemistry' ? 'rgba(34, 197, 94, 0.2)' : 
-                                                              'rgba(249, 115, 22, 0.2)',
-                                            backgroundImage: subject.name === 'Physics' ? 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1))' : 
-                                                              subject.name === 'Chemistry' ? 'linear-gradient(to bottom right, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1))' : 
-                                                              'linear-gradient(to bottom right, rgba(249, 115, 22, 0.2), rgba(245, 158, 11, 0.1))'
-                                        }}
-                                    >
-                                        <div className={`subject-icon ${subject.color}`}>
-                                            {subject.icon}
-                                        </div>
-                                        <h2 className={`subject-name ${subject.color}`}>{subject.name}</h2>
-                                        <div className={`divider ${subject.color.replace('text', 'bg')}`}></div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+            <div className="progress-container">
+                <div className="progress-bar">
+                    <div className="progress-fill" style={{width: `${progress}%`}}></div>
+                </div>
+                <span>Question {currentQuestionIndex + 1} of {quizData.questions.length}</span>
+            </div>
 
-                    {step === 2 && (
-                         <div className="step-container">
-                            <p className="step-description">Practicing {selectedSubject.name}</p>
-                            <p className="sub-step-description">Select your preferred practice mode</p>
-                            <div className="modes-container">
-                                {PRACTICE_MODES.map(mode => (
-                                    <button 
-                                        key={mode.name} 
-                                        onClick={() => handleModeSelect(mode)}
-                                        className="mode-card"
-                                    >
-                                        <div className="mode-icon">
-                                            {mode.icon}
-                                        </div>
-                                        <div className="mode-content">
-                                            <h3 className="mode-title">{mode.name}</h3>
-                                            <p className="mode-description">{mode.description}</p>                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+            <div className="question-card">
+                <div className="question-header">
+                    <div className="question-number">Question #{currentQuestionIndex + 1}</div>
+                    <button 
+                        className={`bookmark-btn ${isBookmarked ? 'active' : ''}`}
+                        onClick={() => toggleBookmark(currentQuestion.id)}
+                        title={isBookmarked ? "Remove Bookmark" : "Bookmark Question"}
+                    >
+                        <Bookmark size={24} fill={isBookmarked ? "currentColor" : "none"} />
+                    </button>
+                </div>
 
-                    {step === 3 && (
-                        <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} Practice</p>
-                            <p className="sub-step-description">Select a topic to focus on</p>
-                            <div className="topics-grid">
-                                {topics.map(topic => (
-                                    <button 
-                                        key={topic} 
-                                        onClick={() => handleTopicSelect(topic)}
-                                        className="topic-button"
-                                    >
-                                        <h3 className="topic-name">{topic}</h3>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                <div className="question-text">{currentQuestion.question}</div>
 
-                    {step === 4 && (
-                        <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} Previous Year Questions</p>
-                            <p className="sub-step-description">Select a year to practice</p>
-                            <div className="years-grid">
-                                {PYQ_YEARS.map(year => (
-                                    <button 
-                                        key={year} 
-                                        onClick={() => handleYearSelect(year)}
-                                        className="year-button"
-                                    >
-                                        <Calendar size={24} className="year-icon" />
-                                        <h3 className="year-name">JEE {year}</h3>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                <div className="options-grid">
+                    {currentQuestion.options.map((option, index) => {
+                        const isSelected = answered?.answer === option;
+                        const isCorrectOption = option === currentQuestion.correctAnswer;
+                        
+                        let buttonClass = 'option-btn';
+                        if (answered) {
+                            if (isCorrectOption) {
+                                buttonClass += ' correct';
+                            } else if (isSelected && !isCorrectOption) {
+                                buttonClass += ' incorrect';
+                            } else if (!isSelected && answered) {
+                                buttonClass += ' disabled';
+                            }
+                        }
+                        
+                        return (
+                            <button
+                                key={index}
+                                className={buttonClass}
+                                onClick={() => handleAnswerSelect(currentQuestion.id, option)}
+                                disabled={!!answered}
+                            >
+                                {option}
+                                {answered && isCorrectOption && (
+                                    <span className="correct-indicator"> ✓</span>
+                                )}
+                                {answered && isSelected && !isCorrectOption && (
+                                    <span className="incorrect-indicator"> ✗</span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
 
-                    {step === 5 && (
-                        <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} Coaching Modal Papers</p>
-                            <p className="sub-step-description">Select a coaching institute</p>
-                            <div className="institutes-grid">
-                                {COACHING_INSTITUTES.map(institute => (
-                                    <button 
-                                        key={institute} 
-                                        onClick={() => handleInstituteSelect(institute)}
-                                        className="institute-button"
-                                    >
-                                        <Award size={24} className="institute-icon" />
-                                        <h3 className="institute-name">{institute}</h3>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 6 && (
-                        <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} JSON Question Bank</p>
-                            <p className="sub-step-description">Select a year to practice</p>
-                            <div className="json-years-grid">
-                                {JSON_YEARS.map(year => (
-                                    <button 
-                                        key={year} 
-                                        onClick={() => handleJsonYearSelect(year)}
-                                        className="json-year-button"
-                                    >
-                                        <Database size={24} className="json-year-icon" />
-                                        <h3 className="json-year-name">{year} Questions</h3>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    
-                    {loading && (
-                        <div className="loading-overlay">
-                            <div className="loading-content">
-                                <Loader size={48} className="spinner" />
-                                <h3 className="loading-title">
-                                    {selectedMode?.mode === 'json' ? 'Loading Questions' : 'Generating AI Questions'}
-                                </h3>
-                                <p className="loading-text">
-                                    {selectedMode?.mode === 'json' ? 'Preparing questions with AI explanations...' : 'Preparing your personalized quiz...'}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {error && (
-                        <div className="error-message">
-                            {error}
+                <div className="hint-section">
+                    <button className="hint-btn" onClick={() => setShowHint(!showHint)}>
+                        <Lightbulb size={18} />
+                        {showHint ? 'Hide Hint' : 'Show Hint'}
+                    </button>
+                    {showHint && (
+                        <div className="hint-content">
+                            <strong>Hint:</strong> {currentQuestion.hint}
                         </div>
                     )}
                 </div>
-
-                <div className="background-grid"></div>
+                
+                <div className="explanation-section">
+                    {answered && (
+                        <>
+                            <div className="explanation-header">
+                                <Sparkles size={24} className="explanation-icon" />
+                                <h3>AI Explanation</h3>
+                            </div>
+                            {loadingExplanation ? (
+                                <div className="loading-explanation">
+                                    <p>Generating explanation...</p>
+                                </div>
+                            ) : (
+                                <div 
+                                    className="explanation-content" 
+                                    dangerouslySetInnerHTML={{ 
+                                        __html: explanation?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') || '' 
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+                    <div className="navigation-buttons">
+                        <button 
+                            className="nav-btn prev-btn" 
+                            onClick={goToPreviousQuestion}
+                            disabled={isFirstQuestion}
+                        >
+                            <ChevronLeft size={20} />
+                            Previous
+                        </button>
+                        <button 
+                            className="nav-btn next-btn" 
+                            onClick={goToNextQuestion}
+                        >
+                            {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
+                </div>
             </div>
-        </>
+
+            <style jsx>{`
+                :root {
+                    --primary-bg: #0f172a;
+                    --card-bg: rgba(255, 255, 255, 0.05);
+                    --border-color: rgba(255, 255, 255, 0.1);
+                    --primary-text: #e2e8f0;
+                    --secondary-text: #94a3b8;
+                    --accent-blue: #3b82f6;
+                    --accent-green: #22c55e;
+                    --accent-red: #ef4444;
+                    --accent-yellow: #eab308;
+                    --accent-purple: #a855f7;
+                }
+
+                .quiz-container {
+                    min-height: 100vh;
+                    background-color: var(--primary-bg);
+                    color: var(--primary-text);
+                    padding: 1rem;
+                    background-image: 
+                        radial-gradient(circle at 10% 20%, rgba(86, 58, 220, 0.05) 0%, transparent 20%),
+                        radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 20%);
+                }
+
+                .quiz-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1.5rem;
+                    background: rgba(30, 41, 59, 0.5);
+                    border-radius: 16px;
+                    margin-bottom: 2rem;
+                    border: 1px solid var(--border-color);
+                    backdrop-filter: blur(10px);
+                }
+
+                .header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
+
+                .header-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
+
+                .back-button, .dashboard-button, .revision-button {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: none;
+                    border-radius: 8px;
+                    color: var(--primary-text);
+                    padding: 0.5rem;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                }
+
+                .revision-button {
+                    background: rgba(234, 179, 8, 0.1);
+                }
+
+                .bookmark-count {
+                    position: absolute;
+                    top: -5px;
+                    right: -5px;
+                    background: var(--accent-yellow);
+                    color: #000;
+                    border-radius: 50%;
+                    width: 18px;
+                    height: 18px;
+                    font-size: 0.7rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                }
+
+                .back-button:hover, .dashboard-button:hover, .revision-button:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: scale(1.05);
+                }
+
+                .quiz-title {
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    background: linear-gradient(to right, #3b82f6, #8b5cf6);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    margin: 0;
+                }
+
+                .timer {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.5rem;
+                    background: rgba(59, 130, 246, 0.1);
+                    border-radius: 12px;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: #93c5fd;
+                }
+
+                .progress-container {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                }
+
+                .progress-bar {
+                    flex: 1;
+                    height: 8px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+
+                .progress-fill {
+                    height: 100%;
+                    background: linear-gradient(to right, #3b82f6, #8b5cf6);
+                    border-radius: 4px;
+                    transition: width 0.5s ease;
+                }
+
+                .question-card {
+                    background: var(--card-bg);
+                    border-radius: 20px;
+                    padding: 2rem;
+                    margin-bottom: 2rem;
+                    border: 1px solid var(--border-color);
+                    backdrop-filter: blur(10px);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .question-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 4px;
+                    background: linear-gradient(to right, #3b82f6, #8b5cf6);
+                    opacity: 0.7;
+                }
+
+                .question-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 1.5rem;
+                }
+
+                .question-number {
+                    font-size: 1.1rem;
+                    color: var(--secondary-text);
+                }
+
+                .bookmark-btn {
+                    background: none;
+                    border: none;
+                    color: var(--secondary-text);
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .bookmark-btn.active {
+                    color: var(--accent-yellow);
+                }
+
+                .bookmark-btn:hover {
+                    transform: scale(1.1);
+                }
+
+                .question-text {
+                    font-size: 1.4rem;
+                    line-height: 1.5;
+                    margin-bottom: 2rem;
+                    font-weight: 500;
+                }
+
+                .options-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                }
+
+                @media (max-width: 768px) {
+                    .options-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    
+                    .quiz-container {
+                        padding: 0.5rem;
+                    }
+                    
+                    .question-card {
+                        padding: 1.5rem;
+                    }
+                    
+                    .question-text {
+                        font-size: 1.2rem;
+                    }
+
+                    .quiz-header {
+                        flex-direction: column;
+                        gap: 1rem;
+                        padding: 1rem;
+                    }
+
+                    .header-left, .header-right {
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+
+                    .quiz-title {
+                        font-size: 1.3rem;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .question-card {
+                        padding: 1rem;
+                    }
+
+                    .question-text {
+                        font-size: 1.1rem;
+                    }
+
+                    .options-grid {
+                        gap: 0.5rem;
+                    }
+
+                    .quiz-header {
+                        padding: 0.75rem;
+                    }
+                }
+
+                .option-btn {
+                    padding: 1.25rem;
+                    border: 2px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    background: rgba(30, 41, 59, 0.5);
+                    color: var(--primary-text);
+                    text-align: left;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .option-btn:hover {
+                    border-color: var(--accent-blue);
+                    background: rgba(59, 130, 246, 0.1);
+                    transform: translateY(-2px);
+                }
+
+                .option-btn.correct {
+                    border-color: var(--accent-green);
+                    background: rgba(34, 197, 94, 0.1);
+                }
+
+                .option-btn.incorrect {
+                    border-color: var(--accent-red);
+                    background: rgba(239, 68, 68, 0.1);
+                }
+
+                .option-btn.disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                }
+
+                .hint-section {
+                    text-align: center;
+                    margin: 1.5rem 0;
+                }
+
+                .hint-btn {
+                    background: none;
+                    border: none;
+                    color: var(--accent-purple);
+                    cursor: pointer;
+                    font-size: 1rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    margin: 0 auto;
+                    padding: 0.5rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                }
+
+                .hint-btn:hover {
+                    background: rgba(168, 85, 247, 0.1);
+                }
+
+                .hint-content {
+                    margin-top: 1rem;
+                    padding: 1.25rem;
+                    background: rgba(168, 85, 247, 0.1);
+                    border-radius: 12px;
+                    border-left: 4px solid var(--accent-purple);
+                    font-size: 0.95rem;
+                }
+
+                .explanation-section {
+                    margin-top: 2rem;
+                    padding-top: 2rem;
+                    border-top: 1px solid var(--border-color);
+                }
+
+                .explanation-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-bottom: 1.5rem;
+                    font-size: 1.3rem;
+                    color: var(--accent-yellow);
+                }
+
+                .explanation-icon {
+                    color: var(--accent-yellow);
+                }
+
+                .explanation-content {
+                    background: rgba(0, 0, 0, 0.2);
+                    padding: 1.25rem;
+                    border-radius: 12px;
+                    line-height: 1.6;
+                    font-size: 1rem;
+                }
+
+                .explanation-content p {
+                    margin-bottom: 1rem;
+                }
+
+                .explanation-content strong {
+                    color: var(--accent-yellow);
+                }
+
+                .navigation-buttons {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 2rem;
+                    gap: 1rem;
+                }
+
+                .nav-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    border: none;
+                }
+
+                .prev-btn {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: var(--primary-text);
+                }
+
+                .prev-btn:hover:not(:disabled) {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+
+                .prev-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                .next-btn {
+                    background: var(--accent-blue);
+                    color: white;
+                }
+
+                .next-btn:hover {
+                    background: #2563eb;
+                    transform: translateX(4px);
+                }
+
+                .loading-explanation {
+                    padding: 2rem;
+                    text-align: center;
+                    color: var(--secondary-text);
+                }
+
+                .correct-indicator {
+                    color: var(--accent-green);
+                    font-weight: bold;
+                    margin-left: 0.5rem;
+                }
+
+                .incorrect-indicator {
+                    color: var(--accent-red);
+                    font-weight: bold;
+                    margin-left: 0.5rem;
+                }
+
+                @media (max-width: 480px) {
+                    .navigation-buttons {
+                        flex-direction: column;
+                    }
+
+                    .nav-btn {
+                        justify-content: center;
+                        width: 100%;
+                        padding: 1rem;
+                        font-size: 1rem;
+                    }
+                }
+            `}</style>
+        </div>
     );
 };
 
-export default PracticePage;
+export default QuizPage;
