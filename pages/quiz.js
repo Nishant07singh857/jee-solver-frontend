@@ -9,6 +9,8 @@ import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'fireba
 
 // Use environment variable for backend URL with fallback
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+const response = await fetch('https://your-backend-service.vercel.app/api/topics');
+
 
 const QuizPage = () => {
     const [quizData, setQuizData] = useState(null);
