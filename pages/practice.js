@@ -330,7 +330,7 @@ const PracticePage = () => {
                     
                     .back-button:hover {
                         color: #93c5fd;
-                        border-color: rgba(96, 165, 250, 0.3);
+                        border-color: rgba(96, 165, 250, 极.3);
                     }
                     
                     .title {
@@ -379,7 +379,7 @@ const PracticePage = () => {
                     }
                     
                     .subject-card {
-                        background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 极.1));
+                        background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
                         border: 1px solid rgba(255, 255, 255, 0.1);
                         border-radius: 1rem;
                         padding: 2rem;
@@ -472,7 +472,7 @@ const PracticePage = () => {
                         gap: 0.75rem;
                     }
                     
-                    @media (min-width: 768px) {
+                    @media (min-width: 768极) {
                         .topics-grid, .years-grid, .institutes-grid, .json-years-grid {
                             grid-template-columns: repeat(3, 1fr);
                         }
@@ -669,7 +669,7 @@ const PracticePage = () => {
 
                     {step === 2 && (
                          <div className="step-container">
-                            <p className="step-description">Practicing {selectedSubject.name}</p>
+                            <p className="step-description">Practicing {selectedSubject?.name}</p>
                             <p className="sub-step-description">Select your preferred practice mode</p>
                             <div className="modes-container">
                                 {PRACTICE_MODES.map(mode => (
@@ -692,7 +692,7 @@ const PracticePage = () => {
 
                     {step === 3 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} Practice</p>
+                            <p className="step-description">{selectedSubject?.name} Practice</p>
                             <p className="sub-step-description">Select a topic to focus on</p>
                             <div className="topics-grid">
                                 {topics.map(topic => (
@@ -710,7 +710,7 @@ const PracticePage = () => {
 
                     {step === 4 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} Previous Year Questions</p>
+                            <p className="step-description">{selectedSubject?.name} Previous Year Questions</p>
                             <p className="sub-step-description">Select a year to practice</p>
                             <div className="years-grid">
                                 {PYQ_YEARS.map(year => (
@@ -729,7 +729,7 @@ const PracticePage = () => {
 
                     {step === 5 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} Coaching Modal Papers</p>
+                            <p className="step-description">{selectedSubject?.name} Coaching Modal Papers</p>
                             <p className="sub-step-description">Select a coaching institute</p>
                             <div className="institutes-grid">
                                 {COACHING_INSTITUTES.map(institute => (
@@ -748,7 +748,7 @@ const PracticePage = () => {
 
                     {step === 6 && (
                         <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} JSON Question Bank</p>
+                            <p className="step-description">{selectedSubject?.name} JSON Question Bank</p>
                             <p className="sub-step-description">Select a year to practice</p>
                             <div className="json-years-grid">
                                 {JSON_YEARS.map(year => (
