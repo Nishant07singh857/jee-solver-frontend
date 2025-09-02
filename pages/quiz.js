@@ -7,9 +7,9 @@ import axios from 'axios';
 import { auth, db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
-// Use environment variable for backend URL with fallback
-<<<<<<< HEAD
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+// Use environment variable for backend URL with fallbackconst
+BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+
 const QuizPage = () => {
     const [quizData, setQuizData] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
