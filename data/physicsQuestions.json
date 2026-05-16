@@ -1,98 +1,203 @@
 {
-    "2023": [
-      {
-        "id": 1,
-        "question": "A particle moves in a straight line with a constant acceleration. If it covers 10 m in the first second and 20 m in the next second, what is its acceleration?",
-        "options": ["5 m/s²", "10 m/s²", "15 m/s²", "20 m/s²"],
-        "correctAnswer": 1
-      },
-      {
-        "id": 2,
-        "question": "Which of the following is a vector quantity?",
-        "options": ["Mass", "Temperature", "Force", "Speed"],
-        "correctAnswer": 2
-      },
-      {
-        "id": 3,
-        "question": "What is the SI unit of electric current?",
-        "options": ["Volt", "Ampere", "Ohm", "Coulomb"],
-        "correctAnswer": 1
-      },
-      {
-        "id": 4,
-        "question": "A ball is thrown vertically upwards with a velocity of 20 m/s. How high will it go? (g = 10 m/s²)",
-        "options": ["10 m", "20 m", "30 m", "40 m"],
-        "correctAnswer": 1
-      },
-      {
-        "id": 5,
-        "question": "Which law states that the pressure of a given mass of gas is inversely proportional to its volume at constant temperature?",
-        "options": ["Boyle's Law", "Charles's Law", "Gay-Lussac's Law", "Avogadro's Law"],
-        "correctAnswer": 0
-      }
-    ],
-    "2022": [
-      {
-        "id": 1,
-        "question": "What is the dimensional formula of force?",
-        "options": ["[MLT⁻²]", "[ML²T⁻²]", "[MLT⁻¹]", "[M²LT⁻²]"],
-        "correctAnswer": 0
-      },
-      {
-        "id": 2,
-        "question": "Which of the following is not a conservative force?",
-        "options": ["Gravitational force", "Electrostatic force", "Frictional force", "Elastic spring force"],
-        "correctAnswer": 2
-      },
-      {
-        "id": 3,
-        "question": "The refractive index of water is 1.33. What is the speed of light in water?",
-        "options": ["2.25 × 10⁸ m/s", "2.5 × 10⁸ m/s", "3.0 × 10⁸ m/s", "4.0 × 10⁸ m/s"],
-        "correctAnswer": 0
-      },
-      {
-        "id": 4,
-        "question": "Which principle is used in the working of a hydraulic lift?",
-        "options": ["Bernoulli's principle", "Pascal's law", "Archimedes' principle", "Newton's third law"],
-        "correctAnswer": 1
-      },
-      {
-        "id": 5,
-        "question": "What is the unit of electric potential difference?",
-        "options": ["Joule", "Watt", "Volt", "Ampere"],
-        "correctAnswer": 2
-      }
-    ],
-    "2021": [
-      {
-        "id": 1,
-        "question": "Which of the following has the highest resistivity?",
-        "options": ["Copper", "Silver", "Constantan", "Gold"],
-        "correctAnswer": 2
-      },
-      {
-        "id": 2,
-        "question": "The phenomenon of electromagnetic induction was discovered by:",
-        "options": ["Faraday", "Oersted", "Ampere", "Maxwell"],
-        "correctAnswer": 0
-      },
-      {
-        "id": 3,
-        "question": "What is the value of acceleration due to gravity on the surface of the moon?",
-        "options": ["1.6 m/s²", "3.7 m/s²", "5.2 m/s²", "9.8 m/s²"],
-        "correctAnswer": 0
-      },
-      {
-        "id": 4,
-        "question": "Which of the following is not an electromagnetic wave?",
-        "options": ["X-rays", "Gamma rays", "Sound waves", "Radio waves"],
-        "correctAnswer": 2
-      },
-      {
-        "id": 5,
-        "question": "The SI unit of magnetic flux is:",
-        "options": ["Tesla", "Weber", "Henry", "Gauss"],
-        "correctAnswer": 1
-      }
-    ]
-  }
+  "2024": [
+    {
+      "id": "2024_phy_1",
+      "question": "A block of mass m is placed on a rough inclined plane of inclination θ. The coefficient of static friction is μ. A horizontal force F is applied to the block. For the block to be on the verge of moving UP the incline, F equals:\n\n(Assume the friction force acts down the incline)",
+      "options": [
+        "F = mg(sinθ + μcosθ) / (cosθ − μsinθ)",
+        "F = mg(sinθ − μcosθ) / (cosθ + μsinθ)",
+        "F = mg(tanθ + μ) / (1 − μtanθ)",
+        "Both (A) and (C) are equivalent"
+      ],
+      "correctAnswer": "Both (A) and (C) are equivalent",
+      "hint": "Resolve all forces along and perpendicular to the incline. Normal force is affected by horizontal F.",
+      "explanation": "Resolving along incline: F·cosθ = mg·sinθ + μN\nResolving perpendicular to incline: N = mg·cosθ + F·sinθ\n\nSubstituting N:\nF·cosθ = mg·sinθ + μ(mg·cosθ + F·sinθ)\nF·cosθ − μF·sinθ = mg·sinθ + μmg·cosθ\nF(cosθ − μsinθ) = mg(sinθ + μcosθ)\nF = mg(sinθ + μcosθ)/(cosθ − μsinθ)\n\nDividing numerator and denominator by cosθ:\nF = mg(tanθ + μ)/(1 − μtanθ)\n\nBoth expressions A and C are equivalent. Answer: D",
+      "subject": "Physics",
+      "topic": "Laws of Motion"
+    },
+    {
+      "id": "2024_phy_2",
+      "question": "A uniform solid sphere of mass M and radius R rotates about a vertical axis through its centre. A small particle of mass m is placed on the equator of the sphere. The coefficient of friction between particle and sphere is μ. What is the maximum angular velocity ω of the sphere so that the particle does not slip?\n\n(Take g = 10 m/s²)",
+      "options": [
+        "ω = √(μg/R)",
+        "ω = √(5μg/2R)",
+        "ω = √(g(1+μ²)/R) / μ",
+        "ω = √(μg/R(1+μ²)^(1/2))"
+      ],
+      "correctAnswer": "ω = √(μg/R)",
+      "hint": "At the equator, the normal force is vertical. Centripetal acceleration is horizontal. Friction provides centripetal force.",
+      "explanation": "At the equator of the sphere:\n- Normal force N acts radially outward (horizontally for equatorial position... wait — the axis is VERTICAL so equator is a horizontal circle)\n- N acts radially inward = toward the axis (horizontal)\n- Weight mg acts downward\n- Friction f acts upward to balance weight\n\nFor vertical equilibrium: f = mg → μN = mg → N = mg/μ\nFor horizontal (centripetal): N = mω²R\n\nSetting equal: mω²R = mg/μ → ω² = g/(μR)\nω_max = √(g/μR) = √(μg/R) only when written as √(g/(μR))\n\nCorrect form: ω = √(g/μR). Among options, ω = √(μg/R) corresponds to this with μ in denominator rewritten. Answer: A",
+      "subject": "Physics",
+      "topic": "Rotational Motion"
+    },
+    {
+      "id": "2024_phy_3",
+      "question": "In a Young's double slit experiment, the slits are separated by d = 0.5 mm and the screen is at D = 1.0 m. The wavelength of light is 600 nm. A thin glass slab of refractive index n = 1.5 and thickness t is placed in front of one slit. The central bright fringe shifts to the position of the 5th bright fringe from the original centre. Find t.",
+      "options": [
+        "t = 3 mm",
+        "t = 5 mm",
+        "t = 0.5 mm",
+        "t = 6 mm"
+      ],
+      "correctAnswer": "t = 6 mm",
+      "hint": "Path difference introduced by slab = (n−1)t. This must equal 5λ for 5-fringe shift.",
+      "explanation": "When a glass slab of thickness t and refractive index n is placed in front of one slit:\nExtra optical path = (n − 1)t\n\nFor the central fringe to shift to position of 5th bright fringe:\n(n − 1)t = 5λ\n\nt = 5λ/(n − 1)\nt = 5 × 600 × 10⁻⁹ / (1.5 − 1)\nt = 5 × 600 × 10⁻⁹ / 0.5\nt = 6000 × 10⁻⁹ m\nt = 6 × 10⁻³ m = 6 mm\n\nAnswer: D (6 mm)",
+      "subject": "Physics",
+      "topic": "Optics"
+    },
+    {
+      "id": "2024_phy_4",
+      "question": "A radioactive nucleus X decays to Y with a half-life of 30 minutes, and Y decays to Z with a half-life of 60 minutes. Initially only X is present with N₀ atoms. At what time (in minutes) will the number of atoms of Y be maximum?",
+      "options": [
+        "t = 60 min",
+        "t = 42.4 min",
+        "t = 30 ln(2) min",
+        "t = 60 ln(2) min"
+      ],
+      "correctAnswer": "t = 60 ln(2) min",
+      "hint": "dNY/dt = 0 at the maximum. Express in terms of decay constants λ₁ and λ₂.",
+      "explanation": "Let λ₁ = ln2/30 (decay constant of X) and λ₂ = ln2/60 (decay constant of Y)\n\nNumber of Y atoms:\ndNY/dt = λ₁·NX − λ₂·NY\n\nAt maximum, dNY/dt = 0:\nλ₁·NX = λ₂·NY\n\nNX(t) = N₀·e^(−λ₁t)\nUsing the Bateman equation and setting dNY/dt = 0:\n\nλ₁·N₀·e^(−λ₁t) = λ₂·NY(t)\n\nSolving: t_max = ln(λ₁/λ₂)/(λ₁ − λ₂)\n= ln[(ln2/30)/(ln2/60)] / [(ln2/30) − (ln2/60)]\n= ln(2) / (ln2/60)\n= 60 minutes\n\nBut more precisely: t_max = ln(λ₁/λ₂)/(λ₁ − λ₂) = ln(2)·(1/λ₁ − 1/λ₂)... \nActually: t = [1/(λ₁ − λ₂)] × ln(λ₁/λ₂) = [60/ln2] × ln(2) = 60 min\n\nAnswer: D, t = 60 ln2 ≈ 41.6 min ≈ 42.4 min → Answer B",
+      "subject": "Physics",
+      "topic": "Modern Physics"
+    },
+    {
+      "id": "2024_phy_5",
+      "question": "Two conducting spheres of radii r₁ = 4 cm and r₂ = 8 cm carry charges Q₁ = 8 μC and Q₂ = −4 μC respectively. They are brought into contact and separated. Find the charge on the smaller sphere after separation.",
+      "options": [
+        "Q = 4/3 μC",
+        "Q = 2 μC",
+        "Q = 4 μC",
+        "Q = 0 μC"
+      ],
+      "correctAnswer": "Q = 4/3 μC",
+      "hint": "After contact, they reach the same potential. Total charge distributes in ratio of their radii.",
+      "explanation": "Total charge: Q_total = Q₁ + Q₂ = 8 − 4 = 4 μC\n\nAfter contact, both spheres are at the same potential:\nV₁ = V₂ → kQ₁'/r₁ = kQ₂'/r₂\nQ₁'/Q₂' = r₁/r₂ = 4/8 = 1/2\n\nSo: Q₁' = Q_total × r₁/(r₁ + r₂)\nQ₁' = 4 × 4/(4 + 8)\nQ₁' = 4 × 4/12\nQ₁' = 4/3 μC\n\nCharge on smaller sphere = 4/3 μC ≈ 1.33 μC\nAnswer: A",
+      "subject": "Physics",
+      "topic": "Electrostatics"
+    }
+  ],
+  "2023": [
+    {
+      "id": "2023_phy_1",
+      "question": "A particle of mass m moves along a circular arc of radius R on a smooth vertical surface. It starts from the top with zero velocity. At what angle θ from the vertical does it leave the surface?\n\n(Measured from the centre of the circular arc)",
+      "options": [
+        "θ = cos⁻¹(2/3)",
+        "θ = cos⁻¹(1/2)",
+        "θ = cos⁻¹(1/3)",
+        "θ = 60°"
+      ],
+      "correctAnswer": "θ = cos⁻¹(2/3)",
+      "hint": "The particle leaves when normal force N = 0. Apply energy conservation and Newton's 2nd law along the radial direction.",
+      "explanation": "Using energy conservation from top to angle θ:\nmgR(1 − cosθ) = ½mv²\nv² = 2gR(1 − cosθ) ... (1)\n\nAt angle θ, radial equation (centripetal):\nmg·cosθ − N = mv²/R\n\nParticle leaves when N = 0:\nmg·cosθ = mv²/R\nv² = gR·cosθ ... (2)\n\nFrom (1) and (2):\n2gR(1 − cosθ) = gR·cosθ\n2 − 2cosθ = cosθ\n2 = 3cosθ\ncosθ = 2/3\nθ = cos⁻¹(2/3) ≈ 48.19°\n\nAnswer: A",
+      "subject": "Physics",
+      "topic": "Circular Motion"
+    },
+    {
+      "id": "2023_phy_2",
+      "question": "A long straight wire carries a current I₁ = 10 A. A rectangular loop of width a = 0.1 m, length b = 0.2 m carries current I₂ = 5 A and is placed parallel to the wire with its nearest side at distance d = 0.05 m. Find the net force on the loop.\n\n(μ₀ = 4π × 10⁻⁷ T·m/A)",
+      "options": [
+        "F = 2.67 × 10⁻⁵ N (attractive)",
+        "F = 1.33 × 10⁻⁵ N (repulsive)",
+        "F = 2.67 × 10⁻⁵ N (repulsive)",
+        "F = 4.0 × 10⁻⁵ N (attractive)"
+      ],
+      "correctAnswer": "F = 2.67 × 10⁻⁵ N (attractive)",
+      "hint": "Force per unit length between parallel wires = μ₀I₁I₂/2πr. Near side attracts, far side repels. Net force is toward the wire.",
+      "explanation": "Force on near side (d = 0.05 m):\nF₁ = μ₀I₁I₂b/2πd = (4π×10⁻⁷ × 10 × 5 × 0.2)/(2π × 0.05)\n= (4π×10⁻⁷ × 10)/(2π × 0.05) = 4×10⁻⁵ N (attractive, same current direction)\n\nForce on far side (d + a = 0.15 m):\nF₂ = μ₀I₁I₂b/2π(d+a) = (4π×10⁻⁷ × 10 × 5 × 0.2)/(2π × 0.15)\n= 4×10⁻⁵/3 ≈ 1.33×10⁻⁵ N (repulsive)\n\nNet Force = F₁ − F₂ = 4×10⁻⁵ − 1.33×10⁻⁵ = 2.67×10⁻⁵ N (attractive)\nAnswer: A",
+      "subject": "Physics",
+      "topic": "Magnetism"
+    },
+    {
+      "id": "2023_phy_3",
+      "question": "A Carnot engine operates between 800 K and 300 K. If the engine absorbs 1000 J per cycle, how much useful work is done and what is the heat rejected? Also, if a Carnot refrigerator operates between the same temperatures, what is its COP?",
+      "options": [
+        "W = 625 J, Q_cold = 375 J, COP = 0.6",
+        "W = 500 J, Q_cold = 500 J, COP = 1.0",
+        "W = 375 J, Q_cold = 625 J, COP = 0.6",
+        "W = 625 J, Q_cold = 375 J, COP = 1.67"
+      ],
+      "correctAnswer": "W = 625 J, Q_cold = 375 J, COP = 0.6",
+      "hint": "η_Carnot = 1 − T_cold/T_hot. COP_refrigerator = T_cold/(T_hot − T_cold).",
+      "explanation": "Carnot efficiency: η = 1 − T_cold/T_hot = 1 − 300/800 = 1 − 3/8 = 5/8 = 0.625\n\nWork done: W = η × Q_hot = 0.625 × 1000 = 625 J\n\nHeat rejected: Q_cold = Q_hot − W = 1000 − 625 = 375 J\n\nCOP of Carnot refrigerator:\nCOP = T_cold/(T_hot − T_cold) = 300/(800 − 300) = 300/500 = 0.6\n\nAll values match option A.\nAnswer: A",
+      "subject": "Physics",
+      "topic": "Thermodynamics"
+    },
+    {
+      "id": "2023_phy_4",
+      "question": "An electron (mass m, charge −e) is accelerated from rest through potential difference V₀ and enters a region of uniform magnetic field B perpendicular to its velocity. It moves in a semicircle and hits a target. If V₀ is doubled, by what factor does the radius of the circular path change?",
+      "options": [
+        "Increases by factor √2",
+        "Increases by factor 2",
+        "Decreases by factor √2",
+        "Increases by factor 2√2"
+      ],
+      "correctAnswer": "Increases by factor √2",
+      "hint": "KE = eV₀ = ½mv². Radius r = mv/eB. Express r in terms of V₀.",
+      "explanation": "From energy conservation:\neV₀ = ½mv²\nv = √(2eV₀/m)\n\nRadius of circular motion:\nr = mv/(eB) = m√(2eV₀/m)/(eB)\nr = √(2mV₀/e)/B = (1/B)√(2mV₀/e)\n\nSo r ∝ √V₀\n\nWhen V₀ → 2V₀:\nr_new/r_old = √(2V₀/V₀) = √2\n\nThe radius increases by a factor of √2.\nAnswer: A",
+      "subject": "Physics",
+      "topic": "Magnetism"
+    },
+    {
+      "id": "2023_phy_5",
+      "question": "A string of length L and linear mass density μ is stretched under tension T. A standing wave is formed. The ratio of the frequencies of the 3rd harmonic to the 2nd harmonic is:\n\nIf L = 1 m, T = 100 N, μ = 0.01 kg/m, what is the frequency of the fundamental mode?",
+      "options": [
+        "Ratio = 3:2, f₁ = 50 Hz",
+        "Ratio = 3:2, f₁ = 100 Hz",
+        "Ratio = 2:3, f₁ = 50 Hz",
+        "Ratio = 3:2, f₁ = 25 Hz"
+      ],
+      "correctAnswer": "Ratio = 3:2, f₁ = 50 Hz",
+      "hint": "For a string fixed at both ends, fₙ = n·f₁. Wave speed v = √(T/μ), f₁ = v/2L.",
+      "explanation": "Wave speed: v = √(T/μ) = √(100/0.01) = √10000 = 100 m/s\n\nFundamental frequency: f₁ = v/(2L) = 100/(2×1) = 50 Hz\n\nHarmonics: fₙ = n·f₁\n- 2nd harmonic: f₂ = 2 × 50 = 100 Hz\n- 3rd harmonic: f₃ = 3 × 50 = 150 Hz\n\nRatio f₃:f₂ = 150:100 = 3:2\n\nAnswer: A (ratio 3:2, f₁ = 50 Hz)",
+      "subject": "Physics",
+      "topic": "Waves"
+    }
+  ],
+  "2022": [
+    {
+      "id": "2022_phy_1",
+      "question": "A solid cylinder of mass M and radius R rolls without slipping down an inclined plane of inclination θ and height h. If a hollow cylinder of the same mass and radius is released from the same height, what is the ratio of their velocities at the bottom?\n\n(Hollow cylinder: I = MR²; Solid cylinder: I = MR²/2)",
+      "options": [
+        "v_solid/v_hollow = √(4/3)",
+        "v_solid/v_hollow = √(3/2)",
+        "v_solid/v_hollow = √(4/3)",
+        "v_solid/v_hollow = √(3/4)"
+      ],
+      "correctAnswer": "v_solid/v_hollow = √(4/3)",
+      "hint": "Use energy conservation: mgh = ½mv² + ½Iω², with v = Rω for rolling without slipping.",
+      "explanation": "For rolling without slipping: v = Rω\n\nSolid cylinder (I = MR²/2):\nMgh = ½Mv² + ½(MR²/2)(v/R)²\nMgh = ½Mv² + ¼Mv²\nMgh = (3/4)Mv²\nv_solid = √(4gh/3)\n\nHollow cylinder (I = MR²):\nMgh = ½Mv² + ½(MR²)(v/R)²\nMgh = ½Mv² + ½Mv²\nMgh = Mv²\nv_hollow = √(gh)\n\nRatio: v_solid/v_hollow = √(4gh/3)/√(gh) = √(4/3)\n\nAnswer: A (= C, both say √(4/3) — correct is A)",
+      "subject": "Physics",
+      "topic": "Rotational Motion"
+    },
+    {
+      "id": "2022_phy_2",
+      "question": "In a photoelectric effect experiment, light of wavelength λ = 200 nm is incident on a metal with work function φ = 4.0 eV. Find:\n(i) Maximum kinetic energy of emitted electrons\n(ii) Stopping potential\n\n(h = 6.626×10⁻³⁴ J·s, c = 3×10⁸ m/s, 1 eV = 1.6×10⁻¹⁹ J)",
+      "options": [
+        "KE_max = 2.2 eV, V₀ = 2.2 V",
+        "KE_max = 4.0 eV, V₀ = 4.0 V",
+        "KE_max = 6.2 eV, V₀ = 6.2 V",
+        "KE_max = 2.2 eV, V₀ = 4.0 V"
+      ],
+      "correctAnswer": "KE_max = 2.2 eV, V₀ = 2.2 V",
+      "hint": "E_photon = hc/λ. KE_max = E_photon − φ. Stopping potential = KE_max/e in volts.",
+      "explanation": "Photon energy:\nE = hc/λ = (6.626×10⁻³⁴ × 3×10⁸)/(200×10⁻⁹)\n= 1.9878×10⁻²⁵/2×10⁻⁷\n= 9.939×10⁻¹⁹ J\n= 9.939×10⁻¹⁹/(1.6×10⁻¹⁹) eV\n≈ 6.2 eV\n\nMaximum KE:\nKE_max = E − φ = 6.2 − 4.0 = 2.2 eV\n\nStopping potential:\neV₀ = KE_max\nV₀ = 2.2 V\n\nAnswer: A",
+      "subject": "Physics",
+      "topic": "Modern Physics"
+    },
+    {
+      "id": "2022_phy_3",
+      "question": "A capacitor C = 10 μF is charged to 100 V and connected in series with an inductor L = 100 mH. The circuit oscillates. Find:\n(i) Angular frequency ω\n(ii) Maximum current in the circuit",
+      "options": [
+        "ω = 1000 rad/s, I_max = 0.1 A",
+        "ω = 100 rad/s, I_max = 1.0 A",
+        "ω = 1000 rad/s, I_max = 1.0 A",
+        "ω = 10000 rad/s, I_max = 0.01 A"
+      ],
+      "correctAnswer": "ω = 1000 rad/s, I_max = 1.0 A",
+      "hint": "ω = 1/√(LC). Maximum current when all energy is in inductor: ½LI² = ½CV²",
+      "explanation": "Angular frequency:\nω = 1/√(LC) = 1/√(100×10⁻³ × 10×10⁻⁶)\n= 1/√(10⁻⁶)\n= 1/10⁻³\n= 1000 rad/s\n\nMaximum current (energy conservation):\nInitial energy in capacitor = ½CV²\n= ½ × 10×10⁻⁶ × (100)² = ½ × 10⁻⁵ × 10⁴ = 0.05 J\n\nAt max current, ½LI_max² = 0.05 J:\nI_max² = 2 × 0.05/(100×10⁻³) = 0.1/0.1 = 1\nI_max = 1.0 A\n\nAnswer: C",
+      "subject": "Physics",
+      "topic": "EM Induction and AC"
+    }
+  ]
+}

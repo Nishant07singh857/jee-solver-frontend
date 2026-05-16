@@ -91,6 +91,92 @@ const ProgressPage = () => {
         return () => unsubscribe();
     }, [router]);
 
+    // Helper function to calculate weekly progress
+    const calculateWeeklyProgress = (results) => {
+        const weeklyData = [];
+        const today = new Date();
+        
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(today.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            const dayResults = results.filter(result => {
+                if (!result.completedAt) return false;
+                const resultDate = result.completedAt.toDate ? 
+                    result.completedAt.toDate().toISOString().split('T')[0] :
+                    new Date(result.completedAt).toISOString().split('T')[0];
+                return resultDate === dateStr;
+            });
+            
+            let dayQuestions = 0;
+            let dayCorrect = 0;
+            
+            dayResults.forEach(result => {
+                if (result.questions) {
+                    dayQuestions += result.questions.length;
+                    dayCorrect += result.correctAnswers || 0;
+                }
+            });
+            
+            const dayAccuracy = dayQuestions > 0 ? Math.round((dayCorrect / dayQuestions) * 100) : 0;
+            
+            weeklyData.push({
+                day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+                accuracy: dayAccuracy,
+                questions: dayQuestions
+            });
+        }
+        
+        return weeklyData;
+    };
+
+    // Helper function to calculate streak
+    const calculateStreak = (results) => {
+        if (results.length === 0) return 0;
+        
+        let streak = 0;
+        const today = new Date().toISOString().split('T')[0];
+        const uniqueDays = [...new Set(results
+            .filter(result => result.completedAt)
+            .map(result => {
+                const date = result.completedAt.toDate ? 
+                    result.completedAt.toDate() : 
+                    new Date(result.completedAt);
+                return date.toISOString().split('T')[0];
+            })
+        )].sort().reverse();
+        
+        if (uniqueDays.length > 0 && uniqueDays[0] === today) {
+            streak = 1;
+            for (let i = 1; i < uniqueDays.length; i++) {
+                const prevDate = new Date(uniqueDays[i-1]);
+                const currDate = new Date(uniqueDays[i]);
+                const diffTime = Math.abs(prevDate - currDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        return streak;
+    };
+
+    // Fixed calculateRank function
+    const calculateRank = (accuracy) => {
+        if (accuracy >= 90) return "Top 5%";
+        if (accuracy >= 80) return "Top 15%";
+        if (accuracy >= 70) return "Top 30%";
+        if (accuracy >= 60) return "Top 50%";
+        if (accuracy >= 50) return "Top 70%";
+        if (accuracy > 0) return "Needs Improvement";
+        return "Start Practicing";
+    };
+
     const fetchUserProgress = async (userId) => {
         try {
             setLoading(true);
@@ -99,8 +185,7 @@ const ProgressPage = () => {
             const resultsQuery = query(
                 collection(db, 'quizResults'),
                 where('userId', '==', userId),
-                orderBy('completedAt', 'desc'),
-                limit(50)
+                orderBy('completedAt', 'desc')
             );
             
             const resultsSnapshot = await getDocs(resultsQuery);
@@ -129,28 +214,36 @@ const ProgressPage = () => {
                 Maths: {}
             };
             
-            // Process each quiz result
+            // Process each quiz result with better error handling
             results.forEach(result => {
-                if (result.questions) {
+                if (result.questions && Array.isArray(result.questions)) {
                     totalQuestions += result.questions.length;
-                    correctAnswers += result.correctAnswers;
+                    correctAnswers += result.correctAnswers || 0;
                     
                     result.questions.forEach(question => {
-                        const isCorrect = question.isCorrect;
+                      // ✅ subject pick karne ka better tareeka
+                      let subject = question.subject || result.subject || 'General';
+                      const topic = question.topic || 'General';
+                      const isCorrect = question.isCorrect || false;
+                  
+                      // ✅ map karo 'General' ko Chemistry (ya jo tum decide karo)
+                      if (subject === 'General') {
+                          subject = 'Chemistry'; // ya 'Physics' / 'Maths' – jo tum use kar rahe ho questions me
+                      }
                         
                         // Update subject stats
-                        if (subjectStats[question.subject]) {
-                            subjectStats[question.subject].total++;
-                            if (isCorrect) subjectStats[question.subject].correct++;
+                        if (subjectStats[subject]) {
+                            subjectStats[subject].total++;
+                            if (isCorrect) subjectStats[subject].correct++;
                         }
                         
                         // Update topic stats
-                        if (question.topic && topicStats[question.subject]) {
-                            if (!topicStats[question.subject][question.topic]) {
-                                topicStats[question.subject][question.topic] = { total: 0, correct: 0 };
+                        if (topicStats[subject]) {
+                            if (!topicStats[subject][topic]) {
+                                topicStats[subject][topic] = { total: 0, correct: 0 };
                             }
-                            topicStats[question.subject][question.topic].total++;
-                            if (isCorrect) topicStats[question.subject][question.topic].correct++;
+                            topicStats[subject][topic].total++;
+                            if (isCorrect) topicStats[subject][topic].correct++;
                         }
                     });
                 }
@@ -159,14 +252,29 @@ const ProgressPage = () => {
             // Calculate accuracy
             const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
             
-            // Calculate subject performance
-            const subjectPerformanceData = subjectPerformance.map(subject => {
-                const stats = subjectStats[subject.name];
-                const subjectAccuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-                return { ...subject, accuracy: subjectAccuracy };
-            });
+            // Calculate subject performance with fallbacks
+            const subjectPerformanceData = [
+                { 
+                    name: 'Physics', 
+                    accuracy: subjectStats.Physics.total > 0 ? 
+                        Math.round((subjectStats.Physics.correct / subjectStats.Physics.total) * 100) : 0,
+                    color: '#3b82f6' 
+                },
+                { 
+                    name: 'Chemistry', 
+                    accuracy: subjectStats.Chemistry.total > 0 ? 
+                        Math.round((subjectStats.Chemistry.correct / subjectStats.Chemistry.total) * 100) : 0,
+                    color: '#22c55e' 
+                },
+                { 
+                    name: 'Maths', 
+                    accuracy: subjectStats.Maths.total > 0 ? 
+                        Math.round((subjectStats.Maths.correct / subjectStats.Maths.total) * 100) : 0,
+                    color: '#f97316' 
+                },
+            ];
             
-            // Calculate topic performance for heatmap
+            // Calculate topic performance for heatmap with better data
             const heatmapData = {
                 Physics: [],
                 Chemistry: [],
@@ -177,7 +285,9 @@ const ProgressPage = () => {
                 Object.keys(topicStats[subject]).forEach(topic => {
                     const stats = topicStats[subject][topic];
                     const topicAccuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-                    if (stats.total >= 5) { // Only show topics with at least 5 attempts
+                    
+                    // Only show topics with at least 2 attempts and filter out "Unknown"
+                    if (stats.total >= 2 && topic !== 'Unknown' && topic !== 'General') {
                         heatmapData[subject].push({
                             topic: topic,
                             score: topicAccuracy
@@ -188,66 +298,21 @@ const ProgressPage = () => {
                 // Sort by score descending and limit to top 5
                 heatmapData[subject].sort((a, b) => b.score - a.score);
                 heatmapData[subject] = heatmapData[subject].slice(0, 5);
+                
+                // If no topics, add a placeholder
+                if (heatmapData[subject].length === 0) {
+                    heatmapData[subject].push({
+                        topic: 'Practice more to see topics',
+                        score: 0
+                    });
+                }
             });
             
             // Calculate weekly progress (last 7 days)
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const weeklyData = calculateWeeklyProgress(results);
             
-            const weeklyData = [];
-            for (let i = 0; i < 7; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                
-                const dayResults = results.filter(result => {
-                    const resultDate = result.completedAt?.toDate();
-                    if (!resultDate) return false;
-                    return resultDate.toISOString().split('T')[0] === dateStr;
-                });
-                
-                let dayQuestions = 0;
-                let dayCorrect = 0;
-                
-                dayResults.forEach(result => {
-                    if (result.questions) {
-                        dayQuestions += result.questions.length;
-                        dayCorrect += result.correctAnswers;
-                    }
-                });
-                
-                const dayAccuracy = dayQuestions > 0 ? Math.round((dayCorrect / dayQuestions) * 100) : 0;
-                
-                weeklyData.unshift({
-                    day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
-                    accuracy: dayAccuracy,
-                    questions: dayQuestions
-                });
-            }
-            
-            // Calculate streak (consecutive days with at least 1 question)
-            let streak = 0;
-            const today = new Date().toISOString().split('T')[0];
-            const uniqueDays = [...new Set(results
-                .filter(result => result.completedAt)
-                .map(result => result.completedAt.toDate().toISOString().split('T')[0])
-            )].sort().reverse();
-            
-            if (uniqueDays.length > 0 && uniqueDays[0] === today) {
-                streak = 1;
-                for (let i = 1; i < uniqueDays.length; i++) {
-                    const prevDate = new Date(uniqueDays[i-1]);
-                    const currDate = new Date(uniqueDays[i]);
-                    const diffTime = Math.abs(prevDate - currDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays === 1) {
-                        streak++;
-                    } else {
-                        break;
-                    }
-                }
-            }
+            // Calculate streak
+            const streak = calculateStreak(results);
             
             // Set all state with calculated data
             setOverallStats({
@@ -267,15 +332,6 @@ const ProgressPage = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const calculateRank = (accuracy) => {
-        if (accuracy >= 90) return "Top 5%";
-        if (accuracy >= 80) return "Top 15%";
-        if (accuracy >= 70) return "Top 30%";
-        if (accuracy >= 60) return "Top 50%";
-        if (accuracy >= 50) return "Top 70%";
-        return "Needs Improvement";
     };
 
     useEffect(() => {
@@ -689,15 +745,15 @@ const ProgressPage = () => {
                     @media (min-width: 640px) {
                         .stat-subvalue {
                             font-size: 0.875rem;
-                        margin-top: 0.5rem;
-                        line-height: 1.4;
-                        min-height: 2.5rem;
-                        display: flex;
-                        align-items: flex-end;
-                        flex-wrap: wrap;
-                        gap: 0.25rem;
-                        justify-content: flex-start;
-                    }
+                            margin-top: 0.5rem;
+                            line-height: 1.4;
+                            min-height: 2.5rem;
+                            display: flex;
+                            align-items: flex-end;
+                            flex-wrap: wrap;
+                            gap: 0.25rem;
+                            justify-content: flex-start;
+                        }
                     }
                     
                     .content-grid { 
@@ -832,7 +888,7 @@ const ProgressPage = () => {
                     @media (min-width: 1024px) { 
                         .topics-grid { 
                             grid-template-columns: repeat(5, 1fr); 
-                        } 
+                            } 
                     }
                     
                     .topic-cell { 
@@ -892,8 +948,8 @@ const ProgressPage = () => {
                     @media (min-width: 640px) {
                         .topic-score {
                             font-size: 1.25rem;
-                        line-height: 1.2;
-                        min-height: 1.5rem;
+                            line-height: 1.2;
+                            min-height: 1.5rem;
                             display: flex;
                             align-items: center;
                             justify-content: center;
@@ -1091,7 +1147,7 @@ const ProgressPage = () => {
                     <div className="header">
                         <button onClick={handleBackClick} className="back-button">
                             <ArrowLeft size={18} />
-                            <span className="hidden sm:inline">Back to Dashboard</span>
+                            <span className="hidden sm:inline">Back to </span>
                             <span className="sm:hidden">Dashboard</span>
                         </button>
                         
@@ -1180,9 +1236,9 @@ const ProgressPage = () => {
                                 <BarChart2 className="text-orange-400 w-5 h-5 sm:w-7 sm:h-7" />
                                 Subject Performance
                             </h2>
-                            {overallStats.totalQuestions > 0 ? (
+                            {subjectPerformance.some(subject => subject.accuracy > 0) ? (
                                 <div className="trend-chart">
-                                    <ResponsiveContainer>
+                                    <ResponsiveContainer width="100%" height={300}>
                                         <BarChart data={subjectPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                             <XAxis dataKey="name" stroke="#94a3b8" />
@@ -1198,8 +1254,8 @@ const ProgressPage = () => {
                                 </div>
                             ) : (
                                 <div className="no-data-message">
-                                    <p>No subject data available yet</p>
-                                    <p className="text-sm mt-2">Complete some quizzes to see your performance</p>
+                                    <p>Complete quizzes to see subject performance</p>
+                                    <p className="text-sm mt-2">Practice different subjects to populate this chart</p>
                                 </div>
                             )}
                         </section>
@@ -1212,7 +1268,7 @@ const ProgressPage = () => {
                             </h2>
                             {weeklyProgress.some(day => day.questions > 0) ? (
                                 <div className="trend-chart">
-                                    <ResponsiveContainer>
+                                    <ResponsiveContainer width="100%" height={300}>
                                         <AreaChart data={weeklyProgress} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                             <XAxis dataKey="day" stroke="#94a3b8" />
@@ -1230,8 +1286,8 @@ const ProgressPage = () => {
                                 </div>
                             ) : (
                                 <div className="no-data-message">
-                                    <p>No weekly data available yet</p>
-                                    <p className="text-sm mt-2">Practice daily to track your progress</p>
+                                    <p>Practice daily to see weekly progress</p>
+                                    <p className="text-sm mt-2">Your last 7 days of practice will appear here</p>
                                 </div>
                             )}
                         </section>
@@ -1243,7 +1299,9 @@ const ProgressPage = () => {
                             <Zap className="text-yellow-400 w-5 h-5 sm:w-7 sm:h-7" />
                             Topic Performance Heatmap
                         </h2>
-                        {Object.values(topicHeatmapData).some(subject => subject.length > 0) ? (
+                        {Object.values(topicHeatmapData).some(subject => 
+                            subject.length > 0 && subject[0].topic !== 'Practice more to see topics'
+                        ) ? (
                             <div className="space-y-6">
                                 {Object.entries(topicHeatmapData).map(([subject, topics]) => (
                                     <div key={subject} className="subject-section">
@@ -1254,27 +1312,23 @@ const ProgressPage = () => {
                                             {subject}
                                         </h3>
                                         <div className="topics-grid">
-                                            {topics.length > 0 ? (
-                                                topics.map(item => (
-                                                    <div key={item.topic} className={`topic-cell bg-gradient-to-br ${getHeatmapColor(item.score)}`}>
-                                                        <p className="topic-name">{item.topic}</p>
-                                                        <p className="topic-score">{item.score}%</p>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="no-data-message">
-                                                    <p>No topic data for {subject}</p>
-                                                    <p className="text-sm mt-2">Practice {subject} topics to see your performance</p>
+                                            {topics.map((item, index) => (
+                                                <div 
+                                                    key={`${subject}-${index}`} 
+                                                    className={`topic-cell bg-gradient-to-br ${getHeatmapColor(item.score)}`}
+                                                >
+                                                    <p className="topic-name">{item.topic}</p>
+                                                    <p className="topic-score">{item.score}%</p>
                                                 </div>
-                                            )}
+                                            ))}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="no-data-message">
-                                <p>No topic data available yet</p>
-                                <p className="text-sm mt-2">Complete topic-wise practice to see your strengths and weaknesses</p>
+                                <p>Practice topic-wise questions to see performance heatmap</p>
+                                <p className="text-sm mt-2">Complete at least 2 questions per topic to see data</p>
                             </div>
                         )}
                     </section>

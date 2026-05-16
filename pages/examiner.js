@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 import { gsap } from 'gsap';
 
-const API_ENDPOINT = "http://localhost:8000/api/v1/solver/solve-image";
+const API_ENDPOINT = "http://localhost:8000/api/v1/examiner/check-attempt";
 
-const PhotoSolverPage = () => {
+const ExaminerPage = () => {
     const router = useRouter();
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
@@ -165,7 +165,7 @@ const PhotoSolverPage = () => {
             }
             
             const data = await response.json();
-            setSolution(data.solution);
+            setSolution(data.feedback);
             
             gsap.fromTo(solutionRef.current, 
                 { opacity: 0, y: 50, scale: 0.95 }, 
@@ -219,8 +219,8 @@ const PhotoSolverPage = () => {
     return (
         <>
             <Head>
-                <title>Photo Doubt Solver | JEE Solver</title>
-                <meta name="description" content="Upload a photo of your JEE question and get instant AI-powered solutions" />
+                <title>AI Examiner | JEE Solver</title>
+                <meta name="description" content="Upload your handwritten solution to find mistakes step by step." />
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
             </Head>
 
@@ -329,7 +329,7 @@ const PhotoSolverPage = () => {
                                         {isLoading ? (
                                             <>
                                                 <Loader className="spin" size={20} />
-                                                <span>Analyzing your question</span>
+                                                <span>Analyzing your steps...</span>
                                                 <div className="progress-bar">
                                                     <div className="progress-fill" style={{width: `${uploadProgress}%`}}></div>
                                                 </div>
@@ -337,7 +337,7 @@ const PhotoSolverPage = () => {
                                         ) : (
                                             <>
                                                 <Zap size={20} />
-                                                <span>Get Solution</span>
+                                                <span>Check My Attempt</span>
                                                 <ChevronRight size={18} />
                                             </>
                                         )}
@@ -356,11 +356,11 @@ const PhotoSolverPage = () => {
                                 <ul className="tips-list">
                                     <li>
                                         <CheckCircle size={16} />
-                                        <span>Ensure good lighting and clear handwriting</span>
+                                        <span>Upload only your handwritten steps clearly</span>
                                     </li>
                                     <li>
                                         <CheckCircle size={16} />
-                                        <span>Crop the image to focus only on the question</span>
+                                        <span>Crop to focus on your steps, not the whole page</span>
                                     </li>
                                     <li>
                                         <CheckCircle size={16} />
@@ -393,8 +393,8 @@ const PhotoSolverPage = () => {
                                             <Sparkles size={24} />
                                         </div>
                                         <div>
-                                            <h2>AI Generated Solution</h2>
-                                            <p>Step-by-step explanation powered by advanced AI</p>
+                                            <h2>AI Examiner Feedback</h2>
+                                            <p>Step-by-step analysis of your attempt</p>
                                         </div>
                                     </div>
                                     <div className="solution-content">
@@ -1072,4 +1072,4 @@ const PhotoSolverPage = () => {
     );
 };
 
-export default PhotoSolverPage;
+export default ExaminerPage;

@@ -2,11 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { gsap } from 'gsap';
-import { ArrowLeft, Atom, FlaskConical, Sigma, PlayCircle, FileText, Target, Loader, BookOpen, Award, Calendar, Database } from 'lucide-react';
+import { ArrowLeft, Atom, FlaskConical, Sigma, PlayCircle, FileText, Target, Loader, BookOpen, Award, Calendar, Database, WifiOff } from 'lucide-react';
 import axios from 'axios';
 
 // Import your JSON question data
 import physicsQuestions from '../data/physicsQuestions.json';
+import chemistryQuestions from '../data/chemistryQuestions.json';
+import mathsQuestions from '../data/mathsQuestions.json';
+
+const SUBJECT_QUESTION_BANKS = {
+    Physics: physicsQuestions,
+    Chemistry: chemistryQuestions,
+    Maths: mathsQuestions,
+};
 
 const SUBJECTS = [
     { name: 'Physics', icon: <Atom size={48} />, color: 'text-blue-400', bgColor: 'hover:bg-blue-500/10', borderColor: 'hover:border-blue-500/50', gradient: 'from-blue-500/20 to-violet-500/10' },
@@ -20,20 +28,17 @@ const PRACTICE_MODES = [
     { name: 'Full Mock Test', mode: 'full', description: 'A 30-question test simulating a full exam section.', icon: <FileText size={24} /> },
     { name: 'Previous Year Papers', mode: 'pyq', description: 'Practice with questions from actual JEE exams.', icon: <BookOpen size={24} /> },
     { name: 'Coaching Modal Papers', mode: 'coaching', description: 'Mock papers released by top coaching institutes.', icon: <Award size={24} /> },
-    { name: 'JSON Question Bank', mode: 'json', description: 'Practice with questions from our curated database.', icon: <Database size={24} /> },
+    { name: '🔥 IIT JEE Question Bank', mode: 'json', description: 'IIT JEE Advanced-level curated questions with full solutions — instant load, no AI!', icon: <Database size={24} /> },
+    { name: 'Offline Questions', mode: 'offline', description: 'Pre-stored questions with full explanations — No AI, No internet needed!', icon: <WifiOff size={24} /> },
 ];
 
-const PYQ_YEARS = [2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
+const PYQ_YEARS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017];
 const COACHING_INSTITUTES = ['FIITJEE', 'Allen', 'Resonance', 'Vibrant Academy', 'Motion', 'Aakash'];
-const JSON_YEARS = Object.keys(physicsQuestions).map(year => parseInt(year)).sort((a, b) => b - a);
+// JSON_YEARS is now computed dynamically inside the component based on selected subject
 
 // Use environment variable for backend URL with fallback
-<<<<<<< HEAD
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
-
-=======
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
->>>>>>> d2e8256ea7620c0d258dfd1022af06381acfc6ea
+
 // Predefined particle positions to avoid hydration mismatch
 const PREDEFINED_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
   top: `${(i * 13 + 7) % 100}%`,
@@ -147,7 +152,9 @@ const PracticePage = () => {
         setSelectedMode(mode);
         setNavigationStack([...navigationStack, step]);
         
-        if (mode.mode === 'topic') {
+        if (mode.mode === 'offline') {
+            router.push('/offline-quiz');
+        } else if (mode.mode === 'topic') {
             setStep(3);
         } else if (mode.mode === 'pyq') {
             setStep(4);
@@ -183,44 +190,30 @@ const PracticePage = () => {
         setLoading(true);
         
         try {
-            // Get questions from JSON file
-            const questions = physicsQuestions[year] || [];
+            // Pick the correct subject bank dynamically
+            const bank = SUBJECT_QUESTION_BANKS[selectedSubject.name] || {};
+            const questions = bank[String(year)] || [];
             
-            // Enhance questions with AI explanations
-            const enhancedQuestions = await Promise.all(
-                questions.map(async (question) => {
-                    try {
-                        // Generate explanation using AI
-                        const response = await axios.post(`${BACKEND_API_URL}/questions/generate-explanation`, {
-                            question: question.question,
-                            options: question.options,
-                            correctAnswer: question.options[question.correctAnswer],
-                            userAnswer: "" // Empty for initial generation
-                        });
-                        
-                        return {
-                            ...question,
-                            explanation: response.data.explanation,
-                            hint: "Review the related concepts to understand this question better."
-                        };
-                    } catch (error) {
-                        console.error("Failed to generate explanation:", error);
-                        // Fallback to basic explanation if AI fails
-                        return {
-                            ...question,
-                            explanation: `The correct answer is ${question.options[question.correctAnswer]}.`,
-                            hint: "Review the related concepts to understand this question better."
-                        };
-                    }
-                })
-            );
+            if (questions.length === 0) {
+                setError(`No questions found for ${selectedSubject.name} ${year}. Try another year.`);
+                setLoading(false);
+                return;
+            }
+
+            // Questions already have explanations baked in — no AI needed
+            const enhancedQuestions = questions.map((q) => ({
+                ...q,
+                subject: q.subject || selectedSubject.name,
+                hint: q.hint || 'Review the related concept carefully.',
+                explanation: q.explanation || null,
+            }));
             
             const quizData = {
                 subject: selectedSubject.name,
                 mode: 'json',
-                topic: `json_${year}`,
+                topic: `IIT JEE ${year}`,
                 questions: enhancedQuestions,
-                quizTitle: `${selectedSubject.name} ${year} Questions`
+                quizTitle: `🔥 ${selectedSubject.name} — IIT JEE ${year} (Advanced Level)`
             };
             
             sessionStorage.setItem('currentQuiz', JSON.stringify(quizData));
@@ -671,13 +664,23 @@ const PracticePage = () => {
                                         key={mode.name} 
                                         onClick={() => handleModeSelect(mode)}
                                         className="mode-card"
+                                        style={mode.mode === 'offline' ? {
+                                            borderColor: 'rgba(34, 197, 94, 0.35)',
+                                            background: 'linear-gradient(to right, rgba(34,197,94,0.08), rgba(16,185,129,0.04))',
+                                        } : {}}
                                     >
-                                        <div className="mode-icon">
+                                        <div className="mode-icon" style={mode.mode === 'offline' ? { color: '#4ade80', backgroundColor: 'rgba(34,197,94,0.1)', borderColor: 'rgba(34,197,94,0.25)' } : {}}>
                                             {mode.icon}
                                         </div>
                                         <div className="mode-content">
-                                            <h3 className="mode-title">{mode.name}</h3>
-                                            <p className="mode-description">{mode.description}</p>                                        </div>
+                                            <h3 className="mode-title" style={mode.mode === 'offline' ? { color: '#4ade80' } : {}}>
+                                                {mode.name}
+                                                {mode.mode === 'offline' && (
+                                                    <span style={{ marginLeft: '8px', fontSize: '0.7rem', background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '12px', padding: '2px 8px', fontWeight: 700, verticalAlign: 'middle' }}>⚡ No AI</span>
+                                                )}
+                                            </h3>
+                                            <p className="mode-description">{mode.description}</p>
+                                        </div>
                                     </button>
                                 ))}
                             </div>
@@ -740,34 +743,50 @@ const PracticePage = () => {
                         </div>
                     )}
 
-                    {step === 6 && (
-                        <div className="step-container">
-                            <p className="step-description">{selectedSubject.name} JSON Question Bank</p>
-                            <p className="sub-step-description">Select a year to practice</p>
-                            <div className="json-years-grid">
-                                {JSON_YEARS.map(year => (
-                                    <button 
-                                        key={year} 
-                                        onClick={() => handleJsonYearSelect(year)}
-                                        className="json-year-button"
-                                    >
-                                        <Database size={24} className="json-year-icon" />
-                                        <h3 className="json-year-name">{year} Questions</h3>
-                                    </button>
-                                ))}
+                    {step === 6 && (() => {
+                        const bank = SUBJECT_QUESTION_BANKS[selectedSubject?.name] || {};
+                        const availableYears = Object.keys(bank).map(y => parseInt(y)).sort((a,b) => b - a);
+                        return (
+                            <div className="step-container">
+                                <p className="step-description">🔥 {selectedSubject.name} — IIT JEE Question Bank</p>
+                                <p className="sub-step-description">IIT JEE Advanced-level questions with complete step-by-step solutions. No AI wait time!</p>
+                                {availableYears.length === 0 ? (
+                                    <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                                        <p>No questions available for {selectedSubject.name} yet.</p>
+                                        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Try Quick Quiz or Topic-wise Practice instead.</p>
+                                    </div>
+                                ) : (
+                                    <div className="json-years-grid">
+                                        {availableYears.map(year => (
+                                            <button 
+                                                key={year} 
+                                                onClick={() => handleJsonYearSelect(year)}
+                                                className="json-year-button"
+                                            >
+                                                <Database size={24} className="json-year-icon" />
+                                                <h3 className="json-year-name">JEE {year}</h3>
+                                                <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
+                                                    {bank[String(year)]?.length || 0} questions
+                                                </p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                     
                     {loading && (
                         <div className="loading-overlay">
                             <div className="loading-content">
                                 <Loader size={48} className="spinner" />
                                 <h3 className="loading-title">
-                                    {selectedMode?.mode === 'json' ? 'Loading Questions' : 'Generating AI Questions'}
+                                    {selectedMode?.mode === 'json' ? '⚡ Loading IIT Questions' : '🤖 Generating AI Questions'}
                                 </h3>
                                 <p className="loading-text">
-                                    {selectedMode?.mode === 'json' ? 'Preparing questions with AI explanations...' : 'Preparing your personalized quiz...'}
+                                    {selectedMode?.mode === 'json' 
+                                        ? 'Fetching IIT JEE Advanced-level questions...' 
+                                        : 'AI is crafting your personalized quiz — this may take 20–40 seconds...'}
                                 </p>
                             </div>
                         </div>

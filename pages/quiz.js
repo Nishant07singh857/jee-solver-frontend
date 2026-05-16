@@ -1,18 +1,14 @@
-// pages/quiz.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { ChevronRight, ChevronLeft, Clock, Lightbulb, Sparkles, Bookmark, Home, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Clock, Lightbulb, Sparkles, Bookmark, Home, ArrowLeft, MessageCircle, X, Send, PenTool, Trash2 } from 'lucide-react';
+import SignatureCanvas from 'react-signature-canvas';
 import axios from 'axios';
 import { auth, db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
-// Use environment variable for backend URL with fallback
-<<<<<<< HEAD
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://jee-solver-backend.onrender.com/api/v1";
-=======
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
->>>>>>> d2e8256ea7620c0d258dfd1022af06381acfc6ea
+
 const QuizPage = () => {
     const [quizData, setQuizData] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -24,31 +20,140 @@ const QuizPage = () => {
     const [loadingExplanation, setLoadingExplanation] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [quizStartedAt, setQuizStartedAt] = useState(null);
+    const [explanationCache, setExplanationCache] = useState({});
 
+    // ⏱️ Per-question time tracking
+    const [questionTimings, setQuestionTimings] = useState({});
+    const questionStartTimeRef = useRef(null);
+
+    // 🤖 AI Doubt Solver chatbot
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatInput, setChatInput] = useState('');
+    const [chatLoading, setChatLoading] = useState(false);
+    const chatEndRef = useRef(null);
+
+    // ✍️ Digital Rough Pad
+    const [showRoughPad, setShowRoughPad] = useState(false);
+    const roughPadRef = useRef(null);
+
+    const quizStartedAtRef = useRef(null);
     const router = useRouter();
 
+    const getQuestionKey = (question = {}) => question.id ?? question.question;
+
+    // 1. Initial Load
     useEffect(() => {
-        // Load quiz data from session storage
         const savedQuizData = sessionStorage.getItem('currentQuiz');
         if (savedQuizData) {
             try {
                 const data = JSON.parse(savedQuizData);
-                setQuizData(data);
-                setQuizStartedAt(new Date());
+                quizStartedAtRef.current = new Date();
                 
-                // Load bookmarks from Firebase
+                // Safety: Add IDs if missing
+                if (data.questions) {
+                    data.questions = data.questions.map((q, idx) => ({
+                        ...q,
+                        id: q.id || `temp_${Date.now()}_${idx}`
+                    }));
+                }
+
+                setQuizData(data);
                 loadBookmarks();
                 setLoading(false);
             } catch (err) {
-                setError('Invalid quiz data format');
-                console.error(err);
+                setError('Invalid quiz data');
             }
         } else {
-            // Redirect to practice page if no quiz data
             router.push('/practice');
         }
     }, [router]);
+
+    // 2. Timer Logic
+    useEffect(() => {
+        if (!quizData) return;
+        const timer = setInterval(() => setTimeLeft(prev => (prev > 0 ? prev - 1 : 0)), 1000);
+        return () => clearInterval(timer);
+    }, [quizData]);
+
+    // 🔥 3. BACKGROUND PRE-FETCHER + Question timer reset
+    useEffect(() => {
+        if (!quizData || !quizData.questions) return;
+
+        const currentQ = quizData.questions[currentQuestionIndex];
+        if (!currentQ) return;
+        const key = getQuestionKey(currentQ);
+
+        // ⏱️ Start per-question timer
+        questionStartTimeRef.current = Date.now();
+
+        // UI Reset
+        setShowHint(false);
+        setChatMessages([]); // reset chat for new question
+        
+        if (userAnswers[key]) {
+             const cached = explanationCache[key] || currentQ.explanation;
+             setExplanation(cached);
+        } else {
+            setExplanation(null);
+        }
+
+        // Note: Backend sends explanation: null initially
+        if (!explanationCache[key] && !currentQ.explanation) {
+            console.log(`⚡ Prefetching explanation for Q${currentQuestionIndex + 1}...`);
+            
+            axios.post(`${BACKEND_API_URL}/questions/generate-explanation`, {
+                question: currentQ.question,
+                options: currentQ.options,
+                correctAnswer: currentQ.correctAnswer,
+                userAnswer: "" 
+            })
+            .then(res => {
+                setExplanationCache(prev => ({
+                    ...prev,
+                    [key]: res.data.explanation 
+                }));
+                console.log("✅ Explanation cached in background");
+            })
+            .catch(err => console.error("Background fetch failed", err));
+        }
+
+    }, [currentQuestionIndex, quizData]); // Removed 'userAnswers' to avoid loop
+
+    // 🤖 Auto-scroll chat to bottom
+    useEffect(() => {
+        if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatMessages]);
+
+    // 💬 Send message to AI Doubt Solver
+    const sendChatMessage = async () => {
+        if (!chatInput.trim() || chatLoading) return;
+        const currentQ = quizData?.questions[currentQuestionIndex];
+        if (!currentQ) return;
+
+        const userMsg = chatInput.trim();
+        setChatInput('');
+        setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+        setChatLoading(true);
+
+        try {
+            // Use dedicated /chat endpoint — no more "Missing required fields" error
+            const response = await axios.post(`${BACKEND_API_URL}/questions/chat`, {
+                doubt: userMsg,
+                question: currentQ.question,
+                options: currentQ.options || [],
+                correctAnswer: currentQ.correctAnswer || '',
+            });
+            const reply = response.data.reply || 'I could not generate a response. Please try again!';
+            setChatMessages(prev => [...prev, { role: 'ai', text: reply }]);
+        } catch (err) {
+            setChatMessages(prev => [...prev, { role: 'ai', text: '⏳ AI tutor is busy right now. Try again in a moment!' }]);
+        } finally {
+            setChatLoading(false);
+        }
+    };
 
     // Load bookmarks from Firebase
     const loadBookmarks = async () => {
@@ -67,11 +172,35 @@ const QuizPage = () => {
         }
     };
 
-    useEffect(() => {
-        if (!quizData) return;
-        const timer = setInterval(() => setTimeLeft(prev => (prev > 0 ? prev - 1 : 0)), 1000);
-        return () => clearInterval(timer);
-    }, [quizData]);
+    // 💥 MISTAKE BANK: Save wrong answers for spaced repetition
+    const saveMistakeToBank = async (question, userAnswer, explanation) => {
+        try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
+            const reviewDates = [
+                new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days
+                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+                new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days
+            ];
+            await addDoc(collection(db, 'mistakeBank'), {
+                userId: currentUser.uid,
+                question: question.question,
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+                userAnswer,
+                explanation: explanation || '',
+                subject: question.subject || quizData?.subject || 'General',
+                topic: question.topic || 'Unknown',
+                addedAt: serverTimestamp(),
+                nextReviewDate: reviewDates[0],
+                reviewSchedule: reviewDates,
+                reviewCount: 0,
+                mastered: false,
+            });
+        } catch (err) {
+            console.error('Error saving to mistake bank:', err);
+        }
+    };
 
     const saveQuizResultsToFirebase = async () => {
         try {
@@ -89,16 +218,29 @@ const QuizPage = () => {
             const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
 
             // Prepare questions data for Firebase
-            const questionsData = quizData.questions.map(q => ({
-                question: q.question,
-                userAnswer: userAnswers[q.id]?.answer || '',
-                correctAnswer: q.correctAnswer,
-                isCorrect: userAnswers[q.id]?.isCorrect || false,
-                options: q.options,
-                hint: q.hint || '',
-                subject: quizData.subject || 'General',
-                topic: q.topic || 'Unknown'
-            }));
+            const questionsData = quizData.questions.map(q => {
+                const key = getQuestionKey(q);
+                const userAnswer = userAnswers[key];
+                const expl = explanationCache[key] || q.explanation || '';
+
+                // ✅ Auto-save wrong answers to Mistake Bank
+                if (userAnswer && !userAnswer.isCorrect) {
+                    saveMistakeToBank(q, userAnswer.answer, expl);
+                }
+                
+                return {
+                    question: q.question,
+                    userAnswer: userAnswer?.answer || '',
+                    correctAnswer: q.correctAnswer,
+                    isCorrect: userAnswer?.isCorrect || false,
+                    options: q.options,
+                    explanation: expl,
+                    hint: q.hint || '',
+                    subject: q.subject || quizData.subject || 'General',
+                    topic: q.topic || 'Unknown',
+                    timeSpentSeconds: questionTimings[key] || 0,
+                };
+            });
 
             // Save to Firestore
             const quizResultsRef = collection(db, 'quizResults');
@@ -110,16 +252,48 @@ const QuizPage = () => {
                 accuracy,
                 timeSpent: 30 * 60 - timeLeft, // in seconds
                 completedAt: serverTimestamp(),
-                startedAt: quizStartedAt,
+                startedAt: quizStartedAtRef.current || new Date(),
                 questions: questionsData,
                 subject: quizData.subject || 'General',
                 difficulty: quizData.difficulty || 'Medium'
             });
 
             console.log("Quiz results saved to Firebase successfully");
-
+            try {
+                for (const q of questionsData) {
+                    const subject = q.subject || quizData.subject || 'General';
+                    const topic = q.topic || 'Unknown';
+            
+                    // Per-user + per-subject + per-topic document
+                    const progressRef = doc(
+                        db,
+                        'userProgress',
+                        `${currentUser.uid}_${subject}_${topic}`
+                    );
+            
+                    const snap = await getDoc(progressRef);
+                    const existing = snap.exists()
+                        ? snap.data()
+                        : { totalAttempts: 0, correctAttempts: 0 };
+            
+                    const updated = {
+                        userId: currentUser.uid,
+                        subject,
+                        topic,
+                        totalAttempts: (existing.totalAttempts || 0) + 1,
+                        correctAttempts: (existing.correctAttempts || 0) + (q.isCorrect ? 1 : 0),
+                        lastUpdated: serverTimestamp()
+                    };
+            
+                    await setDoc(progressRef, updated);
+                }
+            
+                console.log("userProgress updated for subject/topic performance");
+            } catch (err) {
+                console.error("Error updating userProgress:", err);
+            }
         } catch (error) {
-            console.error("Error saving quiz results to Firebase:", error);
+            console.error("Error saving quiz results:", error);
         }
     };
 
@@ -138,39 +312,45 @@ const QuizPage = () => {
 
     const recordProgress = (questionId, isCorrect, isBookmarked) => {
         // Backend ko progress save karne ke liye data bhejta hai
+        const safeId = questionId ?? 'unknown';
         axios.post(`${BACKEND_API_URL}/questions/record-progress`, {
-            questionId: questionId.toString(),
+            questionId: String(safeId),
             isCorrect: Boolean(isCorrect),
             isBookmarked: Boolean(isBookmarked)
         }).catch(err => console.log("Failed to record progress:", err));
     };
 
     const handleAnswerSelect = (questionId, option) => {
-        if (userAnswers[questionId]) return;
-        
         const currentQuestion = quizData.questions[currentQuestionIndex];
+        const key = getQuestionKey(currentQuestion);
+        const activeId = (typeof questionId === 'string') ? questionId : key;
+
+        if (!currentQuestion || userAnswers[key]) return;
+
+        // ⏱️ Record time spent on this question
+        const timeSpent = questionStartTimeRef.current
+            ? Math.round((Date.now() - questionStartTimeRef.current) / 1000)
+            : 0;
+        setQuestionTimings(prev => ({ ...prev, [key]: timeSpent }));
+        
         const isCorrect = option === currentQuestion.correctAnswer;
         
-        console.log("Answer selected:", { 
-            questionId, 
-            option, 
-            correctAnswer: currentQuestion.correctAnswer, 
-            isCorrect 
-        });
-        
-        // Update user answers
         setUserAnswers(prev => ({ 
             ...prev, 
-            [questionId]: { 
+            [key]: { 
                 answer: option, 
-                isCorrect: isCorrect 
+                isCorrect 
             } 
         }));
         
-        // Record progress (non-blocking)
-        recordProgress(questionId, isCorrect, !!bookmarks[questionId]);
+        recordProgress(activeId, isCorrect, Boolean(bookmarks[key]));
         
-        // Load explanation
+        const cachedExpl = explanationCache[key] || currentQuestion.explanation;
+        if (cachedExpl) {
+            setExplanation(cachedExpl);
+            return;
+        }
+
         setLoadingExplanation(true);
         axios.post(`${BACKEND_API_URL}/questions/generate-explanation`, {
             question: currentQuestion.question,
@@ -179,6 +359,7 @@ const QuizPage = () => {
             userAnswer: option
         }).then(response => {
             setExplanation(response.data.explanation);
+            setExplanationCache(prev => ({...prev, [key]: response.data.explanation}));
         }).catch(err => {
             console.error("Explanation error:", err);
             setExplanation("Could not load explanation. The AI service might be unavailable.");
@@ -188,11 +369,13 @@ const QuizPage = () => {
     };
 
     const toggleBookmark = async (questionId) => {
-        const currentQuestion = quizData.questions.find(q => q.id === questionId);
+        const currentQuestion = quizData.questions.find(q => getQuestionKey(q) === questionId) 
+            || quizData.questions[currentQuestionIndex];
         if (!currentQuestion) return;
+        const key = getQuestionKey(currentQuestion);
         
-        const newBookmarkState = !bookmarks[questionId];
-        const updatedBookmarks = { ...bookmarks, [questionId]: newBookmarkState };
+        const newBookmarkState = !bookmarks[key];
+        const updatedBookmarks = { ...bookmarks, [key]: newBookmarkState };
         
         setBookmarks(updatedBookmarks);
         
@@ -200,8 +383,8 @@ const QuizPage = () => {
         await saveBookmarksToFirebase(updatedBookmarks);
         
         // If user has answered, record progress with updated bookmark status
-        if (userAnswers[questionId]) {
-            recordProgress(questionId, userAnswers[questionId].isCorrect, newBookmarkState);
+        if (userAnswers[key]) {
+            recordProgress(key, userAnswers[key].isCorrect, newBookmarkState);
         }
         
         // Add question details to bookmark if it's being bookmarked
@@ -211,6 +394,7 @@ const QuizPage = () => {
                 options: currentQuestion.options,
                 correctAnswer: currentQuestion.correctAnswer,
                 hint: currentQuestion.hint || '',
+                explanation: explanationCache[key] || currentQuestion.explanation || '',
                 subject: quizData.subject || 'General',
                 topic: currentQuestion.topic || 'Unknown',
                 bookmarkedAt: new Date().toISOString()
@@ -218,7 +402,7 @@ const QuizPage = () => {
             
             const detailedBookmarks = { 
                 ...updatedBookmarks, 
-                [questionId]: bookmarkDetails 
+                [key]: bookmarkDetails 
             };
             await saveBookmarksToFirebase(detailedBookmarks);
         }
@@ -372,8 +556,9 @@ const QuizPage = () => {
     }
 
     const currentQuestion = quizData.questions[currentQuestionIndex];
-    const answered = userAnswers[currentQuestion.id];
-    const isBookmarked = bookmarks[currentQuestion.id];
+    const currentQuestionKey = getQuestionKey(currentQuestion);
+    const answered = userAnswers[currentQuestionKey];
+    const isBookmarked = bookmarks[currentQuestionKey];
     const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
     const isFirstQuestion = currentQuestionIndex === 0;
     const isLastQuestion = currentQuestionIndex === quizData.questions.length - 1;
@@ -392,6 +577,9 @@ const QuizPage = () => {
                     <h1 className="quiz-title">{quizData.quizTitle}</h1>
                 </div>
                 <div className="header-right">
+                    <button className="revision-button" onClick={() => setShowRoughPad(!showRoughPad)} title="Rough Pad">
+                        <PenTool size={20} />
+                    </button>
                     <div className="timer">
                         <Clock size={20} />
                         <span>{formatTime(timeLeft)}</span>
@@ -406,6 +594,27 @@ const QuizPage = () => {
                 </div>
             </div>
 
+            {/* ✍️ Digital Rough Pad Modal */}
+            {showRoughPad && (
+                <div style={{
+                    position: 'fixed', top: '80px', right: '20px', width: '400px', height: '500px',
+                    backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px',
+                    zIndex: 9999, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #334155', backgroundColor: '#0f172a' }}>
+                        <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><PenTool size={16}/> Digital Rough Pad</h3>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => roughPadRef.current?.clear()} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                            <button onClick={() => setShowRoughPad(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={18} /></button>
+                        </div>
+                    </div>
+                    <div style={{ flex: 1, backgroundColor: '#000000', cursor: 'crosshair' }}>
+                        <SignatureCanvas ref={roughPadRef} penColor="#38bdf8" canvasProps={{ width: 400, height: 450, className: 'sigCanvas' }} />
+                    </div>
+                </div>
+            )}
+
             <div className="progress-container">
                 <div className="progress-bar">
                     <div className="progress-fill" style={{width: `${progress}%`}}></div>
@@ -418,14 +627,14 @@ const QuizPage = () => {
                     <div className="question-number">Question #{currentQuestionIndex + 1}</div>
                     <button 
                         className={`bookmark-btn ${isBookmarked ? 'active' : ''}`}
-                        onClick={() => toggleBookmark(currentQuestion.id)}
+                        onClick={() => toggleBookmark(currentQuestionKey)}
                         title={isBookmarked ? "Remove Bookmark" : "Bookmark Question"}
                     >
                         <Bookmark size={24} fill={isBookmarked ? "currentColor" : "none"} />
                     </button>
                 </div>
 
-                <div className="question-text">{currentQuestion.question}</div>
+                <div className="question-text" style={{ whiteSpace: 'pre-wrap' }}>{currentQuestion.question}</div>
 
                 <div className="options-grid">
                     {currentQuestion.options.map((option, index) => {
@@ -447,7 +656,7 @@ const QuizPage = () => {
                             <button
                                 key={index}
                                 className={buttonClass}
-                                onClick={() => handleAnswerSelect(currentQuestion.id, option)}
+                                onClick={() => handleAnswerSelect(currentQuestionKey, option)}
                                 disabled={!!answered}
                             >
                                 {option}
@@ -469,7 +678,7 @@ const QuizPage = () => {
                     </button>
                     {showHint && (
                         <div className="hint-content">
-                            <strong>Hint:</strong> {currentQuestion.hint}
+                            <strong>Hint:</strong> {currentQuestion.hint || "Hint not available yet (check back later!)"}
                         </div>
                     )}
                 </div>
@@ -489,7 +698,7 @@ const QuizPage = () => {
                                 <div 
                                     className="explanation-content" 
                                     dangerouslySetInnerHTML={{ 
-                                        __html: explanation?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') || '' 
+                                        __html: explanation?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') || 'Explanation available shortly.' 
                                     }}
                                 />
                             )}
@@ -514,6 +723,61 @@ const QuizPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 🤖 AI Doubt Solver - Floating Chat */}
+            <button
+                className="chat-fab"
+                onClick={() => setChatOpen(o => !o)}
+                title="Ask AI Tutor"
+            >
+                {chatOpen ? <X size={22} /> : <MessageCircle size={22} />}
+                {!chatOpen && <span className="chat-fab-label">Ask AI</span>}
+            </button>
+
+            {chatOpen && (
+                <div className="chat-panel">
+                    <div className="chat-header">
+                        <Sparkles size={16} />
+                        <span>AI Doubt Solver</span>
+                        <button onClick={() => setChatOpen(false)} className="chat-close"><X size={16} /></button>
+                    </div>
+                    <div className="chat-messages">
+                        {chatMessages.length === 0 && (
+                            <div className="chat-empty">
+                                <p>Ask me anything about this question! 🧠</p>
+                                <p style={{ fontSize: '0.75rem', marginTop: '0.4rem', opacity: 0.6 }}>e.g. "Why is option B wrong?" or "Explain the concept used here"</p>
+                            </div>
+                        )}
+                        {chatMessages.map((msg, i) => (
+                            <div key={i} className={`chat-msg ${msg.role}`}>
+                                {msg.role === 'ai' && <span className="chat-avatar">🤖</span>}
+                                <div className="chat-bubble">{msg.text}</div>
+                                {msg.role === 'user' && <span className="chat-avatar">👤</span>}
+                            </div>
+                        ))}
+                        {chatLoading && (
+                            <div className="chat-msg ai">
+                                <span className="chat-avatar">🤖</span>
+                                <div className="chat-bubble chat-typing"><span></span><span></span><span></span></div>
+                            </div>
+                        )}
+                        <div ref={chatEndRef} />
+                    </div>
+                    <div className="chat-input-row">
+                        <input
+                            type="text"
+                            value={chatInput}
+                            onChange={e => setChatInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                            placeholder="Type your doubt..."
+                            className="chat-input"
+                        />
+                        <button onClick={sendChatMessage} disabled={chatLoading} className="chat-send">
+                            <Send size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <style jsx>{`
                 :root {
@@ -934,6 +1198,149 @@ const QuizPage = () => {
                         padding: 1rem;
                         font-size: 1rem;
                     }
+                }
+
+                /* 🤖 AI Doubt Solver Chat */
+                .chat-fab {
+                    position: fixed;
+                    bottom: 2rem;
+                    right: 2rem;
+                    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+                    border: none;
+                    border-radius: 50px;
+                    color: white;
+                    padding: 0.85rem 1.25rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+                    z-index: 100;
+                    transition: all 0.3s;
+                }
+                .chat-fab:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(139,92,246,0.5); }
+                .chat-fab-label { font-size: 0.85rem; }
+
+                .chat-panel {
+                    position: fixed;
+                    bottom: 5.5rem;
+                    right: 2rem;
+                    width: 340px;
+                    max-height: 480px;
+                    background: #1e293b;
+                    border: 1px solid rgba(139,92,246,0.35);
+                    border-radius: 18px;
+                    display: flex;
+                    flex-direction: column;
+                    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+                    z-index: 99;
+                    overflow: hidden;
+                }
+                .chat-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.85rem 1rem;
+                    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+                    color: white;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                }
+                .chat-close {
+                    margin-left: auto;
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    opacity: 0.8;
+                }
+                .chat-messages {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 1rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                }
+                .chat-empty {
+                    text-align: center;
+                    color: #64748b;
+                    padding: 1rem;
+                    font-size: 0.9rem;
+                }
+                .chat-msg {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.5rem;
+                }
+                .chat-msg.user { flex-direction: row-reverse; }
+                .chat-avatar { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+                .chat-bubble {
+                    background: rgba(255,255,255,0.08);
+                    border-radius: 12px;
+                    padding: 0.6rem 0.85rem;
+                    font-size: 0.88rem;
+                    line-height: 1.5;
+                    max-width: 80%;
+                    word-break: break-word;
+                }
+                .chat-msg.user .chat-bubble {
+                    background: rgba(59,130,246,0.25);
+                    border: 1px solid rgba(59,130,246,0.3);
+                    color: #bfdbfe;
+                }
+                .chat-msg.ai .chat-bubble {
+                    background: rgba(139,92,246,0.15);
+                    border: 1px solid rgba(139,92,246,0.25);
+                }
+                .chat-typing { display: flex; gap: 4px; align-items: center; padding: 0.6rem 1rem; }
+                .chat-typing span {
+                    width: 7px; height: 7px;
+                    background: #8b5cf6;
+                    border-radius: 50%;
+                    animation: chatBounce 1s infinite;
+                }
+                .chat-typing span:nth-child(2) { animation-delay: 0.15s; }
+                .chat-typing span:nth-child(3) { animation-delay: 0.3s; }
+                @keyframes chatBounce {
+                    0%, 60%, 100% { transform: translateY(0); }
+                    30% { transform: translateY(-6px); }
+                }
+                .chat-input-row {
+                    display: flex;
+                    gap: 0.5rem;
+                    padding: 0.75rem;
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                }
+                .chat-input {
+                    flex: 1;
+                    background: rgba(255,255,255,0.07);
+                    border: 1px solid rgba(255,255,255,0.12);
+                    border-radius: 10px;
+                    padding: 0.55rem 0.85rem;
+                    color: #e2e8f0;
+                    font-size: 0.88rem;
+                    outline: none;
+                }
+                .chat-send {
+                    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+                    border: none;
+                    border-radius: 10px;
+                    color: white;
+                    padding: 0.55rem 0.75rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                }
+                .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+                @media (max-width: 480px) {
+                    .chat-panel { width: calc(100vw - 2rem); right: 1rem; bottom: 5rem; }
+                    .chat-fab { right: 1rem; bottom: 1rem; }
                 }
             `}</style>
         </div>

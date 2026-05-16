@@ -1,0 +1,406 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+
+/* Global styles ko hata do - yeh _app.js ya globals.css mein rahega */
+/* Ya phir inhe class names mein convert karo */
+
+/* Loading Styles */
+.loadingContainer {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+}
+
+.loadingContent {
+    text-align: center;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+    border-radius: 50%;
+    height: 48px;
+    width: 48px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    margin: 0 auto;
+}
+
+.loadingText {
+    color: white;
+    margin-top: 16px;
+}
+
+/* Canvas */
+.canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: 0.3;
+}
+
+/* Container */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    color: #f8fafc;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Error Banner */
+.errorBanner {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dismissButton {
+    background: rgba(239, 68, 68, 0.3);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+}
+
+/* Navigation */
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(to right, #4f46e5, #0891b2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.logoIcon {
+    font-size: 28px;
+    animation: float 6s ease-in-out infinite;
+}
+
+.navButtons {
+    display: flex;
+    gap: 15px;
+}
+
+.navBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.navBtn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.navBtnLogout {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.navBtnLogout:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin: 40px 0;
+}
+
+.headerTitle {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 15px;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Stats Section */
+.statsSection {
+    margin: 50px 0;
+}
+
+.statsTitle {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.statCard {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.statCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.statCardTitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.statCardValue {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+}
+
+.statIconGreen {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.statIconYellow {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.statIconCyan {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba(6, 182, 212, 0.2);
+    color: #06b6d4;
+}
+
+/* Dashboard Grid */
+.dashboardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin: 50px 0;
+}
+
+.dashboardCard {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 4px solid #4f46e5;
+    border-radius: 16px;
+    padding: 30px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboardCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.dashboardCard:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    opacity: 1;
+}
+
+.cardIcon {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.cardTitle {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    font-weight: 700;
+    color: white;
+}
+
+.cardDescription {
+    color: #94a3b8;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.cardCta {
+    color: #0891b2;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dashboardCard:hover .cardCta {
+    opacity: 1;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 30px 0;
+    margin-top: 50px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* Card Color Variants */
+.cardBlue {
+    border-left-color: #4f46e5;
+}
+
+.cardBlue .cardIcon {
+    color: #4f46e5;
+}
+
+.cardGreen {
+    border-left-color: #059669;
+}
+
+.cardGreen .cardIcon {
+    color: #059669;
+}
+
+.cardYellow {
+    border-left-color: #d97706;
+}
+
+.cardYellow .cardIcon {
+    color: #d97706;
+}
+
+.cardPurple {
+    border-left-color: #7c3aed;
+}
+
+.cardPurple .cardIcon {
+    color: #7c3aed;
+}
+
+.cardRed {
+    border-left-color: #dc2626;
+}
+
+.cardRed .cardIcon {
+    color: #dc2626;
+}
+
+.cardCyan {
+    border-left-color: #0891b2;
+}
+
+.cardCyan .cardIcon {
+    color: #0891b2;
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .headerTitle {
+        font-size: 2.2rem;
+    }
+    
+    .statsGrid,
+    .dashboardGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboardCard {
+        padding: 20px;
+    }
+}

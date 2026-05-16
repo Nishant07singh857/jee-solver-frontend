@@ -6,7 +6,7 @@ import { gsap } from 'gsap';
 import { Award, CheckCircle, XCircle, Target, Repeat, LayoutDashboard, ArrowLeft, Home, ExternalLink, BookOpen } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { auth, db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc, orderBy, limit, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from 'firebase/firestore';
 
 const ResultsPage = () => {
     const [resultsData, setResultsData] = useState(null);
@@ -147,167 +147,7 @@ const ResultsPage = () => {
         }
     }, []);
 
-    // Save results to userProgress collection for the progress page
-    const saveResultsToProgress = async (results) => {
-        try {
-            const currentUser = auth.currentUser;
-            if (!currentUser) return;
-
-            // Check if user progress document exists
-            const progressQuery = query(
-                collection(db, 'userProgress'),
-                where('userId', '==', currentUser.uid)
-            );
-            
-            const progressSnapshot = await getDocs(progressQuery);
-            
-            if (progressSnapshot.empty) {
-                // Create new user progress document
-                await addDoc(collection(db, 'userProgress'), {
-                    userId: currentUser.uid,
-                    totalQuestions: results.totalQuestions,
-                    correctAnswers: results.correctAnswers,
-                    accuracy: Math.round((results.correctAnswers / results.totalQuestions) * 100),
-                    lastUpdated: new Date(),
-                    quizAttempts: 1,
-                    subjectPerformance: calculateSubjectPerformance(results.questions),
-                    topicPerformance: calculateTopicPerformance(results.questions)
-                });
-            } else {
-                // Update existing user progress document
-                const progressDoc = progressSnapshot.docs[0];
-                const currentData = progressDoc.data();
-                
-                await updateDoc(doc(db, 'userProgress', progressDoc.id), {
-                    totalQuestions: currentData.totalQuestions + results.totalQuestions,
-                    correctAnswers: currentData.correctAnswers + results.correctAnswers,
-                    accuracy: Math.round(((currentData.correctAnswers + results.correctAnswers) / 
-                                        (currentData.totalQuestions + results.totalQuestions)) * 100),
-                    lastUpdated: new Date(),
-                    quizAttempts: currentData.quizAttempts + 1,
-                    subjectPerformance: updateSubjectPerformance(currentData.subjectPerformance, results.questions),
-                    topicPerformance: updateTopicPerformance(currentData.topicPerformance, results.questions)
-                });
-            }
-        } catch (error) {
-            console.error('Error saving results to progress:', error);
-        }
-    };
-
-    // Helper functions for progress calculation
-    const calculateSubjectPerformance = (questions) => {
-        const subjectStats = {
-            Physics: { total: 0, correct: 0 },
-            Chemistry: { total: 0, correct: 0 },
-            Maths: { total: 0, correct: 0 }
-        };
-
-        questions.forEach(q => {
-            if (subjectStats[q.subject]) {
-                subjectStats[q.subject].total++;
-                if (q.isCorrect) subjectStats[q.subject].correct++;
-            }
-        });
-
-        return [
-            { 
-                name: 'Physics', 
-                accuracy: subjectStats.Physics.total > 0 ? 
-                    Math.round((subjectStats.Physics.correct / subjectStats.Physics.total) * 100) : 0,
-                color: '#3b82f6' 
-            },
-            { 
-                name: 'Chemistry', 
-                accuracy: subjectStats.Chemistry.total > 0 ? 
-                    Math.round((subjectStats.Chemistry.correct / subjectStats.Chemistry.total) * 100) : 0,
-                color: '#22c55e' 
-            },
-            { 
-                name: 'Maths', 
-                accuracy: subjectStats.Maths.total > 0 ? 
-                    Math.round((subjectStats.Maths.correct / subjectStats.Maths.total) * 100) : 0,
-                color: '#f97316' 
-            }
-        ];
-    };
-
-    const calculateTopicPerformance = (questions) => {
-        const topicStats = {
-            Physics: {},
-            Chemistry: {},
-            Maths: {}
-        };
-
-        questions.forEach(q => {
-            if (q.subject && q.topic && topicStats[q.subject]) {
-                if (!topicStats[q.subject][q.topic]) {
-                    topicStats[q.subject][q.topic] = { total: 0, correct: 0 };
-                }
-                topicStats[q.subject][q.topic].total++;
-                if (q.isCorrect) topicStats[q.subject][q.topic].correct++;
-            }
-        });
-
-        // Convert to array format
-        const result = {
-            Physics: [],
-            Chemistry: [],
-            Maths: []
-        };
-
-        Object.keys(topicStats).forEach(subject => {
-            Object.keys(topicStats[subject]).forEach(topic => {
-                const stats = topicStats[subject][topic];
-                if (stats.total >= 3) { // Only include topics with at least 3 attempts
-                    result[subject].push({
-                        topic: topic,
-                        score: Math.round((stats.correct / stats.total) * 100)
-                    });
-                }
-            });
-        });
-
-        return result;
-    };
-
-    const updateSubjectPerformance = (currentPerformance, newQuestions) => {
-        const newPerformance = calculateSubjectPerformance(newQuestions);
-        
-        return currentPerformance.map((subject, index) => {
-            const newSubject = newPerformance[index];
-            if (subject.totalQuestions && newSubject.totalQuestions) {
-                const totalQuestions = subject.totalQuestions + newSubject.totalQuestions;
-                const correctAnswers = subject.correctAnswers + newSubject.correctAnswers;
-                return {
-                    ...subject,
-                    accuracy: Math.round((correctAnswers / totalQuestions) * 100)
-                };
-            }
-            return subject;
-        });
-    };
-
-    const updateTopicPerformance = (currentPerformance, newQuestions) => {
-        const newPerformance = calculateTopicPerformance(newQuestions);
-        const result = { ...currentPerformance };
-
-        Object.keys(newPerformance).forEach(subject => {
-            newPerformance[subject].forEach(newTopic => {
-                const existingTopic = result[subject].find(t => t.topic === newTopic.topic);
-                if (existingTopic) {
-                    // Update existing topic (simplified - in real implementation, you'd track totals)
-                    existingTopic.score = Math.round((existingTopic.score + newTopic.score) / 2);
-                } else {
-                    // Add new topic
-                    result[subject].push(newTopic);
-                }
-            });
-        });
-
-        return result;
-    };
-
-    // Fetch quiz results data
+    // ✅ Fetch quiz results data (display-only now, no extra progress saving here)
     useEffect(() => {
         const fetchResultsData = async () => {
             try {
@@ -332,8 +172,6 @@ const ResultsPage = () => {
                             // Verify this quiz belongs to the current user
                             if (data.userId === currentUser.uid) {
                                 results = data;
-                                // Save to progress collection
-                                await saveResultsToProgress(results);
                             } else {
                                 setError("You don't have permission to view these results");
                                 return;
@@ -361,8 +199,6 @@ const ResultsPage = () => {
                         
                         if (!quizSnapshot.empty) {
                             results = { id: quizSnapshot.docs[0].id, ...quizSnapshot.docs[0].data() };
-                            // Save to progress collection
-                            await saveResultsToProgress(results);
                         } else {
                             setError("noQuizResults");
                             return;
@@ -413,7 +249,10 @@ const ResultsPage = () => {
     const handlePractice = () => router.push("/practice");
     
     const createIndex = () => {
-        window.open("https://console.firebase.google.com/v1/r/project/ai-powerd-jee-learn/firestore/indexes?create_composite=Cldwcm9qZWN0cy9haS1wb3dlcmQtamVlLWxlYXJuL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9xdWl6UmVzdWx0cy9pbmRleGVzL18QARoKCgZ1c2VySWQQARoPCgtjb21wbGV0ZWRBdBACGgwKCF9fbmFtZV9fEAI", "_blank");
+        window.open(
+          "https://console.firebase.google.com/v1/r/project/ai-powerd-jee-learn/firestore/indexes?create_composite=Cldwcm9qZWN0cy9haS1wb3dlcmQtamVlLWxlYXJuL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9xdWl6UmVzdWx0cy9pbmRleGVzL18QARoKCgZ1c2VySWQQARoPCgtjb21wbGV0ZWRBdBACGgwKCF9fbmFtZV9fEAI",
+          "_blank"
+        );
     };
 
     if (loading) {
@@ -559,24 +398,44 @@ const ResultsPage = () => {
                         {/* Score Card */}
                         <div className="results-summary-card bg-white/5 border border-white/10 rounded-2xl p-6 text-center flex flex-col justify-center items-center">
                             <Award size={40} className="text-yellow-400 mb-3" />
-                            <p className="text-5xl font-bold text-white">{scorePercentage}<span className="text-3xl text-gray-400">%</span></p>
+                            <p className="text-5xl font-bold text-white">
+                                {scorePercentage}
+                                <span className="text-3xl text-gray-400">%</span>
+                            </p>
                             <p className="text-lg text-gray-300">Your Score</p>
-                            <p className="text-sm text-gray-400 mt-2">{resultsData.quizTitle || "Quick Quiz"}</p>
+                            <p className="text-sm text-gray-400 mt-2">
+                                {resultsData.quizTitle || "Quick Quiz"}
+                            </p>
                         </div>
 
                         {/* Stats Card */}
                         <div className="results-summary-card bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-center gap-4">
                             <div className="flex items-center gap-4">
                                 <Target size={24} className="text-blue-400" />
-                                <p className="text-lg">Total Questions: <span className="font-bold text-white">{resultsData.totalQuestions}</span></p>
+                                <p className="text-lg">
+                                    Total Questions:{" "}
+                                    <span className="font-bold text-white">
+                                        {resultsData.totalQuestions}
+                                    </span>
+                                </p>
                             </div>
                             <div className="flex items-center gap-4">
                                 <CheckCircle size={24} className="text-green-500" />
-                                <p className="text-lg">Correct Answers: <span className="font-bold text-white">{resultsData.correctAnswers}</span></p>
+                                <p className="text-lg">
+                                    Correct Answers:{" "}
+                                    <span className="font-bold text-white">
+                                        {resultsData.correctAnswers}
+                                    </span>
+                                </p>
                             </div>
                             <div className="flex items-center gap-4">
                                 <XCircle size={24} className="text-red-500" />
-                                <p className="text-lg">Incorrect Answers: <span className="font-bold text-white">{resultsData.totalQuestions - resultsData.correctAnswers}</span></p>
+                                <p className="text-lg">
+                                    Incorrect Answers:{" "}
+                                    <span className="font-bold text-white">
+                                        {resultsData.totalQuestions - resultsData.correctAnswers}
+                                    </span>
+                                </p>
                             </div>
                         </div>
 
@@ -584,9 +443,22 @@ const ResultsPage = () => {
                         <div className="results-summary-card bg-white/5 border border-white/10 rounded-2xl p-6">
                             <ResponsiveContainer width="100%" height={150}>
                                 <PieChart>
-                                    <Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} innerRadius={40} paddingAngle={5}>
+                                    <Pie
+                                        data={pieChartData}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={60}
+                                        innerRadius={40}
+                                        paddingAngle={5}
+                                    >
                                         {pieChartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={COLORS[index % COLORS.length]} />
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={COLORS[index % COLORS.length]}
+                                                stroke={COLORS[index % COLORS.length]}
+                                            />
                                         ))}
                                     </Pie>
                                     <Legend iconType="circle" />
@@ -599,32 +471,64 @@ const ResultsPage = () => {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-6">Question Review</h2>
                         <div className="space-y-4">
-                            {resultsData.questions && resultsData.questions.map((q, index) => (
-                                <div key={index} className={`question-review-card bg-white/5 border-l-4 rounded-lg p-5 ${q.isCorrect ? 'border-green-500' : 'border-red-500'}`}>
-                                    <p className="font-semibold text-lg text-white mb-3">Q{index + 1}: {q.question}</p>
-                                    <div className="space-y-2 text-md">
-                                        <p className={`flex items-center gap-2 ${q.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                                            {q.isCorrect ? <CheckCircle size={18} /> : <XCircle size={18} />}
-                                            Your Answer: <span className="font-mono p-1 rounded bg-black/20">{q.userAnswer}</span>
+                            {resultsData.questions &&
+                                resultsData.questions.map((q, index) => (
+                                    <div
+                                        key={index}
+                                        className={`question-review-card bg-white/5 border-l-4 rounded-lg p-5 ${
+                                            q.isCorrect
+                                                ? "border-green-500"
+                                                : "border-red-500"
+                                        }`}
+                                    >
+                                        <p className="font-semibold text-lg text-white mb-3">
+                                            Q{index + 1}: {q.question}
                                         </p>
-                                        {!q.isCorrect && (
-                                            <p className="flex items-center gap-2 text-green-400">
-                                                <CheckCircle size={18} />
-                                                Correct Answer: <span className="font-mono p-1 rounded bg-black/20">{q.correctAnswer}</span>
+                                        <div className="space-y-2 text-md">
+                                            <p
+                                                className={`flex items-center gap-2 ${
+                                                    q.isCorrect
+                                                        ? "text-green-400"
+                                                        : "text-red-400"
+                                                }`}
+                                            >
+                                                {q.isCorrect ? (
+                                                    <CheckCircle size={18} />
+                                                ) : (
+                                                    <XCircle size={18} />
+                                                )}
+                                                Your Answer:{" "}
+                                                <span className="font-mono p-1 rounded bg-black/20">
+                                                    {q.userAnswer}
+                                                </span>
                                             </p>
-                                        )}
+                                            {!q.isCorrect && (
+                                                <p className="flex items-center gap-2 text-green-400">
+                                                    <CheckCircle size={18} />
+                                                    Correct Answer:{" "}
+                                                    <span className="font-mono p-1 rounded bg-black/20">
+                                                        {q.correctAnswer}
+                                                    </span>
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </section>
 
                     {/* Action Buttons */}
                     <footer className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-                        <button onClick={handleRetry} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all">
+                        <button
+                            onClick={handleRetry}
+                            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all"
+                        >
                             <Repeat size={18} /> Retry Quiz
                         </button>
-                        <button onClick={handleDashboard} className="w-full sm:w-auto bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all">
+                        <button
+                            onClick={handleDashboard}
+                            className="w-full sm:w-auto bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all"
+                        >
                             <LayoutDashboard size={18} /> Back to Dashboard
                         </button>
                     </footer>
@@ -688,7 +592,8 @@ const ResultsPage = () => {
                 /* Hover effects */
                 .results-summary-card:hover {
                     transform: translateY(-5px);
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                        0 10px 10px -5px rgba(0, 0, 0, 0.04);
                 }
 
                 /* Responsive design */

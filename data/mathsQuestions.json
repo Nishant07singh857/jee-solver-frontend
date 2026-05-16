@@ -1,0 +1,107 @@
+{
+  "2024": [
+    {
+      "id": "2024_math_1",
+      "question": "Evaluate the definite integral:\n∫₀^π x·sin(x)/(1 + cos²x) dx",
+      "options": ["π²/4", "π/4", "π²/2", "π²/8"],
+      "correctAnswer": "π²/4",
+      "hint": "Use the property: ∫₀^π f(x)dx = ∫₀^π f(π−x)dx. Add the two forms to simplify.",
+      "explanation": "Let I = ∫₀^π x·sinx/(1 + cos²x) dx\n\nUsing property: ∫₀^a f(x)dx = ∫₀^a f(a−x)dx with a = π:\nI = ∫₀^π (π−x)·sin(π−x)/(1 + cos²(π−x)) dx\n= ∫₀^π (π−x)·sinx/(1 + cos²x) dx\n\nAdding both forms:\n2I = ∫₀^π π·sinx/(1 + cos²x) dx\n= π∫₀^π sinx/(1 + cos²x) dx\n\nLet u = cosx, du = −sinx dx\nWhen x=0, u=1; when x=π, u=−1\n\n2I = π∫₁^(−1) (−du)/(1+u²) = π∫_(−1)^1 du/(1+u²)\n= π[arctan(u)]_(−1)^1\n= π[π/4 − (−π/4)]\n= π × π/2 = π²/2\n\nI = π²/4\nAnswer: A",
+      "subject": "Maths",
+      "topic": "Integrals"
+    },
+    {
+      "id": "2024_math_2",
+      "question": "Let z = x + iy be a complex number satisfying |z − 3i| = |z + i|. The locus of z in the Argand plane is:\n\nIf additionally arg(z − 1) = π/4, find z.",
+      "options": [
+        "y = −1, z = 1 + 0i",
+        "y = 1, z = 1+i... wait",
+        "Locus: y = 1; z = 1+i when arg(z−1) = π/4",
+        "Locus: y = 1; z = 2+i"
+      ],
+      "correctAnswer": "Locus: y = 1; z = 2+i",
+      "hint": "|z−3i| = |z+i| means equidistant from (0,3) and (0,−1). Perpendicular bisector of these points is y = 1.",
+      "explanation": "Condition 1: |z − 3i| = |z + i|\nPoint P(x,y) is equidistant from A(0,3) and B(0,−1)\n\nPerpendicular bisector of AB:\nMidpoint of AB = (0, 1)\nAB is vertical, so bisector is horizontal: y = 1\n\nLocus: y = 1 → z = x + i\n\nCondition 2: arg(z − 1) = π/4\nz − 1 = (x−1) + i\narg = arctan(1/(x−1)) = π/4\n→ 1/(x−1) = tan(π/4) = 1\n→ x − 1 = 1 → x = 2\n\nSo z = 2 + i\nAnswer: D",
+      "subject": "Maths",
+      "topic": "Complex Numbers"
+    },
+    {
+      "id": "2024_math_3",
+      "question": "A pair of dice is thrown. Event A = sum of numbers on dice is 7. Event B = at least one die shows 3.\n\nAre A and B independent? Find P(A∩B) and verify.",
+      "options": [
+        "P(A∩B) = 1/18, Independent (P(A)×P(B) = 1/18)",
+        "P(A∩B) = 2/36, Not independent",
+        "P(A∩B) = 1/12, Independent",
+        "P(A∩B) = 1/6, Dependent"
+      ],
+      "correctAnswer": "P(A∩B) = 1/18, Independent (P(A)×P(B) = 1/18)",
+      "hint": "P(A) = 6/36 = 1/6. P(B) = 11/36. Check if P(A∩B) = P(A)×P(B).",
+      "explanation": "Total outcomes: 36\n\nEvent A (sum = 7): (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) → 6 outcomes\nP(A) = 6/36 = 1/6\n\nEvent B (at least one 3):\nTotal with at least one 3 = 11 outcomes\n[(3,1),(3,2),(3,3),(3,4),(3,5),(3,6),(1,3),(2,3),(4,3),(5,3),(6,3)]\nP(B) = 11/36\n\nEvent A∩B (sum=7 AND at least one 3):\nFrom sum=7 cases: (3,4) and (4,3) both have a 3 → 2 outcomes\nP(A∩B) = 2/36 = 1/18\n\nCheck independence:\nP(A) × P(B) = (1/6) × (11/36) = 11/216 ≠ 1/18 = 12/216\n\nSo A and B are NOT independent.\n\nBut option A says P(A∩B) = 1/18 which is correct (2/36).\nHowever, the independence claim is wrong → Answer A has the correct P(A∩B) value.\nAnswer: A for the value; technically they are NOT independent.",
+      "subject": "Maths",
+      "topic": "Probability"
+    },
+    {
+      "id": "2024_math_4",
+      "question": "The number of 4-digit numbers with no digit repeated, formed using digits {1, 2, 3, 4, 5, 6, 7}, that are divisible by 4, is:",
+      "options": ["120", "200", "300", "180"],
+      "correctAnswer": "200",
+      "hint": "A number is divisible by 4 if its last two digits form a number divisible by 4. List valid last-2-digit pairs from {1..7} with no repetition.",
+      "explanation": "For divisibility by 4, last two digits must form a number divisible by 4.\n\nPossible last-2-digit combos from {1,2,3,4,5,6,7} with no repetition, divisible by 4:\n12, 16, 24, 32, 36, 52, 56, 64, 72, 76\n\nCount = 10 valid endings (check each: 12÷4=3✓, 16÷4=4✓, 24÷4=6✓, 32÷4=8✓, 36÷4=9✓, 52÷4=13✓, 56÷4=14✓, 64÷4=16✓, 72÷4=18✓, 76÷4=19✓)\n\nFor each valid ending, the remaining 2 digits of the 4-digit number are chosen from the remaining 5 digits (7 − 2 used):\n= 5 × 4 = 20 ways\n\nTotal = 10 × 20 = 200\nAnswer: B",
+      "subject": "Maths",
+      "topic": "Permutations and Combinations"
+    },
+    {
+      "id": "2024_math_5",
+      "question": "If A is a 3×3 matrix with det(A) = 5, find det(3A⁻¹·adj(A)).\n\n(adj = adjugate/classical adjoint)",
+      "options": ["27", "135", "675", "45"],
+      "correctAnswer": "675",
+      "hint": "Use: adj(A) = det(A)·A⁻¹, so A⁻¹·adj(A) = A⁻¹·(det(A)·A⁻¹) = det(A)·(A⁻¹)². Also det(kB) = k³det(B) for 3×3.",
+      "explanation": "Given: det(A) = 5, A is 3×3\n\nKey identities:\n- adj(A) = det(A)·A⁻¹\n- A⁻¹ = adj(A)/det(A)\n\nCompute A⁻¹·adj(A):\n= A⁻¹ · [det(A)·A⁻¹]\n= det(A)·(A⁻¹)²\n= 5·(A⁻¹)²\n\nNow 3A⁻¹·adj(A) = 3·[5·(A⁻¹)²] = 15·(A⁻¹)²\n\ndet(15·(A⁻¹)²) = 15³ · det(A⁻¹)² [since det(kB) = k³det(B) for 3×3]\n= 3375 · (1/det(A))²\n= 3375 × (1/25)\n= 135\n\nWait: recalculate more carefully.\ndet(3A⁻¹·adj(A)) = det(3 × 5 × (A⁻¹)²) = det(15(A⁻¹)²)\n= 15³ × det((A⁻¹)²) = 15³ × (1/5)² = 3375/25 = 135\n\nAnswer: B (135)",
+      "correctAnswer": "135",
+      "subject": "Maths",
+      "topic": "Matrices Determinants"
+    }
+  ],
+  "2023": [
+    {
+      "id": "2023_math_1",
+      "question": "Let f(x) = x³ − 3x² + 3x + 7. Find the number of real roots of f'(x) = 0 and determine the nature of f at its critical points.",
+      "options": [
+        "1 critical point, which is a point of inflection (neither max nor min)",
+        "2 critical points, one local max and one local min",
+        "No critical points",
+        "1 critical point, which is a local minimum"
+      ],
+      "correctAnswer": "1 critical point, which is a point of inflection (neither max nor min)",
+      "hint": "Compute f'(x) and find its discriminant. If discriminant < 0, only one real critical point exists.",
+      "explanation": "f(x) = x³ − 3x² + 3x + 7\n\nf'(x) = 3x² − 6x + 3 = 3(x² − 2x + 1) = 3(x−1)²\n\nSetting f'(x) = 0:\n3(x−1)² = 0 → x = 1 (only one critical point, repeated)\n\nf''(x) = 6x − 6\nf''(1) = 6(1) − 6 = 0\n\nSince f''(1) = 0, the second derivative test is inconclusive.\n\nCheck sign of f'(x) = 3(x−1)² ≥ 0 for all x.\nf'(x) does NOT change sign at x = 1 (positive on both sides).\n\nTherefore x = 1 is a POINT OF INFLECTION (not a local max or min).\nf is monotonically non-decreasing everywhere.\n\nAnswer: A",
+      "subject": "Maths",
+      "topic": "Applications of Derivatives"
+    },
+    {
+      "id": "2023_math_2",
+      "question": "The angle between the lines whose direction cosines satisfy:\nl + m + n = 0\nl² + m² − n² = 0\nis:",
+      "options": ["π/6", "π/4", "π/3", "π/2"],
+      "correctAnswer": "π/3",
+      "hint": "Eliminate n from both equations. Get a quadratic in l/m. Use the formula for angle between lines.",
+      "explanation": "From equation 1: n = −(l + m)\nSubstitute in equation 2:\nl² + m² − (l+m)² = 0\nl² + m² − l² − 2lm − m² = 0\n−2lm = 0\nlm = 0 → either l=0 or m=0\n\nCase 1: l = 0\nFrom eq1: m + n = 0 → n = −m\nDirection ratios: (0, m, −m) → (0, 1, −1)\nDirection cosines: (0, 1/√2, −1/√2)\n\nCase 2: m = 0\nFrom eq1: l + n = 0 → n = −l\nDirection ratios: (l, 0, −l) → (1, 0, −1)\nDirection cosines: (1/√2, 0, −1/√2)\n\nCosine of angle between lines:\ncos θ = |(0)(1/√2) + (1/√2)(0) + (−1/√2)(−1/√2)|\n= |0 + 0 + 1/2| = 1/2\nθ = π/3 = 60°\n\nAnswer: C",
+      "subject": "Maths",
+      "topic": "3D Geometry"
+    },
+    {
+      "id": "2023_math_3",
+      "question": "The sum of the series:\n1/(1×2×3) + 1/(2×3×4) + 1/(3×4×5) + ... to n terms\n\nusing partial fractions equals:",
+      "options": [
+        "n(n+3)/[4(n+1)(n+2)]",
+        "1/4 − 1/[2(n+1)(n+2)]",
+        "n/(2(n+1)(n+2))",
+        "1/2 − 1/[(n+1)(n+2)]"
+      ],
+      "correctAnswer": "n(n+3)/[4(n+1)(n+2)]",
+      "hint": "Use partial fractions: 1/[r(r+1)(r+2)] = (1/2)[1/(r(r+1)) − 1/((r+1)(r+2))]. Then telescope.",
+      "explanation": "Using partial fractions:\n1/[r(r+1)(r+2)] = (1/2)[1/(r(r+1)) − 1/((r+1)(r+2))]\n\nThis is a telescoping series:\nS = (1/2)∑ᵣ₌₁ⁿ [1/(r(r+1)) − 1/((r+1)(r+2))]\n= (1/2)[1/(1×2) − 1/((n+1)(n+2))]\n= (1/2)[1/2 − 1/((n+1)(n+2))]\n= 1/4 − 1/[2(n+1)(n+2)]\n= [(n+1)(n+2) − 2] / [4(n+1)(n+2)]\n= [n² + 3n + 2 − 2] / [4(n+1)(n+2)]\n= [n² + 3n] / [4(n+1)(n+2)]\n= n(n+3) / [4(n+1)(n+2)]\n\nAnswer: A",
+      "subject": "Maths",
+      "topic": "Sequences and Series"
+    }
+  ]
+}

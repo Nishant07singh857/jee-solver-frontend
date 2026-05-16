@@ -4,7 +4,12 @@ import { useRouter } from 'next/router';
 import { gsap } from 'gsap';
 import { Mail, Lock, User, AlertTriangle, ChevronRight } from 'lucide-react';
 import { auth } from '../lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  updateProfile 
+} from 'firebase/auth';
 
 const LoginPage = () => {
   const [isLoginView, setIsLoginView] = useState(true);
@@ -22,132 +27,17 @@ const LoginPage = () => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const router = useRouter();
-  const animationRef = useRef(null);
 
   // Check if user is already logged in
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
-        router.push('/dashboard');
+        console.log('User already logged in, redirecting to dashboard');
+        router.push('/login');
       }
     });
     return () => unsubscribe();
-  }, [router]);
-
-  // Initialize Three.js animation
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const initThreeJS = async () => {
-      const THREE = await import('three');
-      
-      // Set up scene
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.z = 5;
-      
-      const renderer = new THREE.WebGLRenderer({
-        canvas: canvasRef.current,
-        alpha: true,
-        antialias: true
-      });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(0x000000, 0);
-      
-      // Create particles
-      const particlesGeometry = new THREE.BufferGeometry();
-      const particlesCount = 1500;
-      
-      const posArray = new Float32Array(particlesCount * 3);
-      const colorArray = new Float32Array(particlesCount * 3);
-      
-      for (let i = 0; i < particlesCount * 3; i += 3) {
-        // Position
-        posArray[i] = (Math.random() - 0.5) * 20;
-        posArray[i + 1] = (Math.random() - 0.5) * 20;
-        posArray[i + 2] = (Math.random() - 0.5) * 10;
-        
-        // Colors (blue and purple theme)
-        const colorChoice = Math.random();
-        if (colorChoice < 0.5) {
-          // Blue
-          colorArray[i] = 0.2;
-          colorArray[i + 1] = 0.4;
-          colorArray[i + 2] = 0.8;
-        } else {
-          // Purple
-          colorArray[i] = 0.6;
-          colorArray[i + 1] = 0.2;
-          colorArray[i + 2] = 0.8;
-        }
-      }
-      
-      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-      particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
-      
-      const particlesMaterial = new THREE.PointsMaterial({
-        size: 0.05,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending
-      });
-      
-      const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-      scene.add(particlesMesh);
-      
-      // Mouse movement
-      let mouseX = 0;
-      let mouseY = 0;
-      
-      const handleMouseMove = (event) => {
-        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-        mouseY = (event.clientY / window.innerHeight) * 2 - 1;
-      };
-      
-      window.addEventListener('mousemove', handleMouseMove);
-      
-      // Animation
-      const clock = new THREE.Clock();
-      
-      const animate = () => {
-        animationRef.current = requestAnimationFrame(animate);
-        
-        const elapsedTime = clock.getElapsedTime();
-        
-        // Animate particles
-        particlesMesh.rotation.y = elapsedTime * 0.1 + mouseX * 0.5;
-        particlesMesh.rotation.x = elapsedTime * 0.12 + mouseY * 0.5;
-        
-        // Pulse effect
-        particlesMaterial.size = 0.05 + Math.sin(elapsedTime * 2) * 0.01;
-        
-        renderer.render(scene, camera);
-      };
-      
-      animate();
-      
-      // Handle resize
-      const handleResize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      };
-      
-      window.addEventListener('resize', handleResize);
-      
-      // Cleanup function
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('resize', handleResize);
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-        renderer.dispose();
-      };
-    };
-    
-    initThreeJS();
   }, []);
 
   // Handle input changes
@@ -180,7 +70,6 @@ const LoginPage = () => {
               duration: 0.5, 
               ease: 'back.out(1.7)',
               onComplete: () => {
-                // Focus first input after animation
                 const firstInput = formRef.current.querySelector('input');
                 if (firstInput) firstInput.focus();
               }
@@ -221,14 +110,13 @@ const LoginPage = () => {
     return true;
   };
 
-  // Handle form submission
+  // DIRECT Firebase authentication - no wrapper functions
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     
     if (!validateForm()) {
-      // Shake animation on error
       gsap.from(formRef.current, {
         x: -5,
         duration: 0.1,
@@ -243,28 +131,40 @@ const LoginPage = () => {
     
     try {
       if (isLoginView) {
-        // Login with Firebase
+        // Direct login call - no wrapper
+        console.log('Attempting login...');
         await signInWithEmailAndPassword(auth, formData.email, formData.password);
-        setSuccess('Welcome to JEE Learning! Redirecting to dashboard...');
+        setSuccess('Welcome back! Redirecting to dashboard...');
         
-        // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/dashboard');
-        }, 2000);
+        }, 1500);
       } else {
-        // Sign up with Firebase
-        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        // Direct signup call - no wrapper
+        console.log('Attempting signup...');
+        const userCredential = await createUserWithEmailAndPassword(
+          auth, 
+          formData.email, 
+          formData.password
+        );
+        
+        // Update profile with full name
+        if (formData.fullName.trim()) {
+          await updateProfile(userCredential.user, {
+            displayName: formData.fullName.trim()
+          });
+        }
+        
         setSuccess('Account created successfully! Redirecting to dashboard...');
         
-        // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/dashboard');
-        }, 2000);
+        }, 1500);
       }
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('Raw authentication error:', error);
       
-      // Handle specific Firebase errors
+      // Enhanced error handling
       switch (error.code) {
         case 'auth/invalid-email':
           setError('Invalid email address format');
@@ -282,13 +182,21 @@ const LoginPage = () => {
           setError('This email is already registered');
           break;
         case 'auth/weak-password':
-          setError('Password is too weak');
+          setError('Password should be at least 6 characters');
+          break;
+        case 'auth/network-request-failed':
+          setError('Network error. Please check your connection');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many attempts. Please try again later');
+          break;
+        case 'auth/operation-not-allowed':
+          setError('Email/password accounts are not enabled');
           break;
         default:
-          setError('An error occurred during authentication');
+          setError(`Authentication failed: ${error.message}`);
       }
       
-      // Shake animation on error
       gsap.from(formRef.current, {
         x: -5,
         duration: 0.1,
@@ -308,6 +216,11 @@ const LoginPage = () => {
       return;
     }
     
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
     setLoading(true);
     setError('');
     
@@ -316,11 +229,75 @@ const LoginPage = () => {
       setSuccess('Password reset email sent! Check your inbox.');
     } catch (error) {
       console.error('Password reset error:', error);
-      setError('Failed to send password reset email');
+      if (error.code === 'auth/user-not-found') {
+        setError('No account found with this email address');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Invalid email address format');
+      } else {
+        setError('Failed to send password reset email. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // Simple background animation
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const particles = [];
+    const particleCount = 50;
+
+    // Create particles
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 1,
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: (Math.random() - 0.5) * 0.5,
+        color: Math.random() > 0.5 ? 'rgba(79, 70, 229, 0.3)' : 'rgba(139, 92, 246, 0.3)'
+      });
+    }
+
+    const animate = () => {
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(particle => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+
+        // Bounce off edges
+        if (particle.x <= 0 || particle.x >= canvas.width) particle.speedX *= -1;
+        if (particle.y <= 0 || particle.y >= canvas.height) particle.speedY *= -1;
+
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fillStyle = particle.color;
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
 
   // Initial animations
   useEffect(() => {
@@ -340,7 +317,6 @@ const LoginPage = () => {
         <meta name="description" content="Access your JEE Solver account to get personalized problem solutions and learning resources." />
       </Head>
 
-      {/* Three.js Canvas for background animation */}
       <canvas 
         ref={canvasRef}
         style={{
@@ -354,14 +330,13 @@ const LoginPage = () => {
         }}
       />
       
-      {/* Gradient overlay for better text readability */}
       <div style={{
         position: 'fixed',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'linear-gradient(135deg, rgba(2, 6, 23, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        background: 'linear-gradient(135deg, rgba(2, 6, 23, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
         zIndex: 1
       }} />
       
@@ -370,7 +345,6 @@ const LoginPage = () => {
         ref={containerRef}
         style={{ position: 'relative', zIndex: 2 }}
       >
-        {/* Clean header with just the logo */}
         <div className="header">
           <div className="logo">
             <i className="fas fa-brain"></i>
@@ -475,7 +449,7 @@ const LoginPage = () => {
             
             {isLoginView && (
               <div className="forgot-password">
-                <button type="button" onClick={handlePasswordReset}>
+                <button type="button" onClick={handlePasswordReset} disabled={loading}>
                   Forgot password?
                 </button>
               </div>
@@ -488,13 +462,13 @@ const LoginPage = () => {
             >
               {loading ? (
                 <>
-                  <i className="fas fa-spinner"></i>
+                  <div className="spinner"></div>
                   <span>{isLoginView ? 'Logging in...' : 'Creating account...'}</span>
                 </>
               ) : (
                 <>
                   <span>{isLoginView ? 'Login to Dashboard' : 'Create Account'}</span>
-                  <ChevronRight size={18} className="mt-0.5" />
+                  <ChevronRight size={18} />
                 </>
               )}
             </button>
@@ -502,7 +476,7 @@ const LoginPage = () => {
           
           {error && (
             <div className="error-message">
-              <AlertTriangle size={18} className="mt-0.5 flex-shrink-0" />
+              <AlertTriangle size={18} />
               <span>{error}</span>
             </div>
           )}
@@ -520,6 +494,7 @@ const LoginPage = () => {
               <button 
                 type="button"
                 onClick={() => switchView(isLoginView ? 'signup' : 'login')}
+                disabled={loading}
               >
                 {isLoginView ? 'Sign up now' : 'Login now'}
               </button>
@@ -540,10 +515,9 @@ const LoginPage = () => {
         }
 
         body {
-          background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+          background: #020617;
           color: #f8fafc;
           min-height: 100vh;
-          overflow-x: hidden;
           font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
@@ -552,7 +526,7 @@ const LoginPage = () => {
           margin: 0 auto;
           padding: 20px;
           position: relative;
-          zIndex: 1;
+          z-index: 1;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -581,11 +555,6 @@ const LoginPage = () => {
           color: transparent;
         }
         
-        .logo i {
-          font-size: 32px;
-          animation: float 6s ease-in-out infinite;
-        }
-        
         .auth-container {
           width: 100%;
           max-width: 450px;
@@ -594,9 +563,7 @@ const LoginPage = () => {
           border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 16px;
           padding: 30px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          position: relative;
-          overflow: hidden;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         
         .auth-header {
@@ -640,7 +607,6 @@ const LoginPage = () => {
         .toggle-btn.active {
           background: linear-gradient(to right, #4f46e5, #7c3aed);
           color: white;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         
         .toggle-btn:not(.active) {
@@ -712,7 +678,7 @@ const LoginPage = () => {
           font-size: 0.9rem;
         }
         
-        .forgot-password button:hover {
+        .forgot-password button:hover:not(:disabled) {
           color: #6366f1;
           text-decoration: underline;
         }
@@ -734,22 +700,22 @@ const LoginPage = () => {
           gap: 8px;
         }
         
-        .submit-btn:hover:not(.loading) {
+        .submit-btn:hover:not(:disabled) {
           background: linear-gradient(to right, #6366f1, #8b5cf6);
           transform: translateY(-2px);
-          box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
         }
         
-        .submit-btn:active:not(.loading) {
-          transform: translateY(0);
-        }
-        
-        .submit-btn.loading {
-          opacity: 0.8;
+        .submit-btn:disabled {
+          opacity: 0.7;
           cursor: not-allowed;
         }
         
-        .submit-btn.loading i {
+        .spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid transparent;
+          border-top: 2px solid white;
+          border-radius: 50%;
           animation: spin 1s linear infinite;
         }
         
@@ -795,7 +761,7 @@ const LoginPage = () => {
           margin-left: 5px;
         }
         
-        .switch-view button:hover {
+        .switch-view button:hover:not(:disabled) {
           color: #6366f1;
           text-decoration: underline;
         }
@@ -809,26 +775,11 @@ const LoginPage = () => {
           width: 100%;
         }
         
-        /* Animations */
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-        
         @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
         
-        /* Responsive design */
         @media (max-width: 768px) {
           .container {
             padding: 15px;
@@ -840,10 +791,6 @@ const LoginPage = () => {
           
           .auth-header h1 {
             font-size: 1.8rem;
-          }
-          
-          .header {
-            margin-bottom: 5px;
           }
         }
       `}</style>
