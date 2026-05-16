@@ -122,7 +122,7 @@ const DashboardLayout = ({
                     <div className={safeStyles.navButtons || ''}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', padding: '8px 16px', borderRadius: '30px', boxShadow: '0 4px 15px rgba(245,158,11,0.3)', fontWeight: '900', color: '#78350f', marginRight: '10px' }}>
                             <span style={{ fontSize: '1.2rem' }}>🪙</span>
-                            <span>{stats?.jeeCoins || 1200} Coins</span>
+                            <span>{stats?.jeeCoins || 0} Coins</span>
                         </div>
                         <div className={safeStyles.navBtn || ''}>
                             <i className="fas fa-user"></i>
