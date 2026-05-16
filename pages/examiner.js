@@ -248,12 +248,12 @@ const ExaminerPage = () => {
                         </div>
                         
                         <h1 className="hero-title">
-                            Photo Doubt 
-                            <span className="gradient-text"> Solver</span>
+                            AI Step-by-Step 
+                            <span className="gradient-text"> Examiner</span>
                         </h1>
                         
                         <p className="hero-description">
-                            Snap a picture of any JEE problem and get instant step-by-step solutions with AI-powered explanations
+                            Upload your attempted handwritten solution and find exactly where you made a mistake.
                         </p>
                     </div>
 
