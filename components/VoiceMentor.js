@@ -24,16 +24,19 @@ const VoiceMentor = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = false;
+            recognitionRef.current.continuous = true; // Fix: Keep listening until user stops
             recognitionRef.current.interimResults = true;
 
             recognitionRef.current.onresult = (event) => {
-                const current = event.resultIndex;
-                const result = event.results[current][0].transcript;
-                setTranscript(result);
+                let currentTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    currentTranscript += event.results[i][0].transcript;
+                }
+                setTranscript(currentTranscript);
             };
 
             recognitionRef.current.onend = () => {
+                // We handle stopping in toggleListening
                 setIsListening(false);
             };
         }

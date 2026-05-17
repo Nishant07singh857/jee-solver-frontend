@@ -178,24 +178,18 @@ const DashboardLayout = ({
 
 
                 <div className={safeStyles.dashboardGrid || ''}>
-                    <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardBlue || ''}`} onClick={() => handleCardClick('solve')}>
+                    <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardBlue || ''}`} onClick={() => handleCardClick('photo-ai')}>
                         <div className={safeStyles.cardIcon || ''}>
                             <i className="fas fa-camera"></i>
                         </div>
-                        <h2 className={safeStyles.cardTitle || ''}>Photo Doubt Solver</h2>
-                        <p className={safeStyles.cardDescription || ''}>Snap a picture of any problem and get an instant, step-by-step AI solution.</p>
-                        <div className={safeStyles.cardCta || ''}>Try it now →</div>
+                        <h2 className={safeStyles.cardTitle || ''}>Photo AI Hub
+                            <span style={{ background: '#6366f1', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', marginLeft: '8px', verticalAlign: 'middle', textTransform: 'none' }}>3-in-1 ✨</span>
+                        </h2>
+                        <p className={safeStyles.cardDescription || ''}>Solve doubts, find mistakes in your attempt & get NCERT-grounded solutions — all in one place.</p>
+                        <div className={safeStyles.cardCta || ''}>Open Hub →</div>
                     </div>
 
-                    <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardPurple || ''}`} onClick={() => handleCardClick('examiner')}>
-                        <div className={safeStyles.cardIcon || ''}>
-                            <i className="fas fa-search-plus"></i>
-                        </div>
-                        <h2 className={safeStyles.cardTitle || ''}>AI Step-by-Step Examiner</h2>
-                        <p className={safeStyles.cardDescription || ''}>Upload your attempted handwritten solution and find your exact mistake.</p>
-                        <div className={safeStyles.cardCta || ''}>Check attempt →</div>
-                    </div>
-                    
+
                     <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardGreen || ''}`} onClick={() => handleCardClick('practice')}>
                         <div className={safeStyles.cardIcon || ''}>
                             <i className="fas fa-book-open"></i>
@@ -235,7 +229,33 @@ const DashboardLayout = ({
                         <p className={safeStyles.cardDescription || ''}>Get intelligent step-wise scoring and feedback on your mock tests.</p>
                         <div className={safeStyles.cardCta || ''}>Assess now →</div>
                     </div>
-                    
+
+                    {/* NCERT Mock Test Generator Card */}
+                    <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardGreen || ''}`} onClick={() => handleCardClick('ncert-mock')}>
+                        <div className={safeStyles.cardIcon || ''}>
+                            <i className="fas fa-graduation-cap"></i>
+                        </div>
+                        <h2 className={safeStyles.cardTitle || ''}>
+                            NCERT Mock Test
+                            <span style={{ background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', marginLeft: '8px', verticalAlign: 'middle', textTransform: 'none' }}>AI ✨</span>
+                        </h2>
+                        <p className={safeStyles.cardDescription || ''}>AI reads your NCERT books & creates 100% textbook-grounded hard MCQs by chapter.</p>
+                        <div className={safeStyles.cardCta || ''}>Generate Test →</div>
+                    </div>
+
+                    {/* AI Flashcards (Revision Shorts) */}
+                    <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardPink || ''}`} onClick={() => handleCardClick('revision-shorts')} style={{ background: 'linear-gradient(135deg, rgba(219,39,119,0.1), rgba(157,23,77,0.2))', border: '1px solid rgba(244,114,182,0.3)' }}>
+                        <div className={safeStyles.cardIcon || ''} style={{ background: 'rgba(244,114,182,0.2)', color: '#f472b6' }}>
+                            <i className="fas fa-layer-group"></i>
+                        </div>
+                        <h2 className={safeStyles.cardTitle || ''}>
+                            Revision Shorts
+                            <span style={{ background: '#db2777', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', marginLeft: '8px', verticalAlign: 'middle', textTransform: 'none' }}>NEW 🔥</span>
+                        </h2>
+                        <p className={safeStyles.cardDescription || ''}>Swipe through Tinder-style AI Flashcards auto-generated from your NCERT books!</p>
+                        <div className={safeStyles.cardCta || ''} style={{ color: '#f472b6' }}>Start Swiping →</div>
+                    </div>
+
                     <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardRed || ''}`} onClick={() => handleCardClick('revision?tab=mistakes')}>
                         <div className={safeStyles.cardIcon || ''}>
                             <i className="fas fa-magic"></i>
@@ -271,6 +291,19 @@ const DashboardLayout = ({
                         <h2 className={safeStyles.cardTitle || ''}>Formula Library</h2>
                         <p className={safeStyles.cardDescription || ''}>Quick-reference cheat sheets for all Physics, Chemistry & Maths formulas. Search instantly.</p>
                         <div className={safeStyles.cardCta || ''}>View formulas →</div>
+                    </div>
+
+                    {/* JEE Coins Store Card */}
+                    <div className={`${safeStyles.dashboardCard || ''}`} onClick={() => handleCardClick('store')} style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(180,83,9,0.2))', border: '1px solid rgba(251,191,36,0.4)' }}>
+                        <div className={safeStyles.cardIcon || ''} style={{ background: 'rgba(251,191,36,0.2)', color: '#fbbf24' }}>
+                            <i className="fas fa-store"></i>
+                        </div>
+                        <h2 className={safeStyles.cardTitle || ''}>
+                            Rewards Store
+                            <span style={{ background: '#f59e0b', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 'bold', marginLeft: '8px', verticalAlign: 'middle', textTransform: 'none' }}>COINS 🪙</span>
+                        </h2>
+                        <p className={safeStyles.cardDescription || ''}>Spend your hard-earned JEE Coins! Unlock AI Avatars, Premium RAG Searches, and more.</p>
+                        <div className={safeStyles.cardCta || ''} style={{ color: '#fbbf24' }}>Visit Store →</div>
                     </div>
 
                     <div className={`${safeStyles.dashboardCard || ''} ${safeStyles.cardYellow || ''}`} onClick={() => handleCardClick('leaderboard')}>

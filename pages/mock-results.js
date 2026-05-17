@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { Award, Target, TrendingUp, Home } from 'lucide-react';
+import { Award, Target, TrendingUp, Home, Coins } from 'lucide-react';
+import { auth, db } from '../lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 const MockResultsPage = () => {
     const router = useRouter();
@@ -9,25 +11,53 @@ const MockResultsPage = () => {
     const [percentile, setPercentile] = useState(0);
     const [air, setAir] = useState(0);
 
+    const [coinsEarned, setCoinsEarned] = useState(0);
+
+    // Realistic JEE Mains Score to Percentile approximation
+    const calculatePercentile = (score) => {
+        if (score >= 250) return 99.90 + ((score - 250) / 50) * 0.1;
+        if (score >= 200) return 99.00 + ((score - 200) / 50) * 0.9;
+        if (score >= 150) return 97.00 + ((score - 150) / 50) * 2.0;
+        if (score >= 100) return 93.00 + ((score - 100) / 50) * 4.0;
+        if (score >= 70) return 85.00 + ((score - 70) / 30) * 8.0;
+        if (score > 0) return (score / 70) * 85.00;
+        return 0;
+    };
+
     useEffect(() => {
         const stored = sessionStorage.getItem('mockResults');
         if (stored) {
             const parsed = JSON.parse(stored);
             setResults(parsed);
             
-            // Simple percentile calculation logic based on score (max 300)
-            // Assumed formula: Base percentile + (Score / 300) * range
-            // Very basic approximation for motivation
-            const scoreRatio = Math.max(0, parsed.score) / parsed.maxScore;
-            let expectedPercentile = 40 + (scoreRatio * 60); 
-            if (expectedPercentile > 99.99) expectedPercentile = 99.99;
-            if (expectedPercentile < 0) expectedPercentile = 0;
+            const expectedPercentile = calculatePercentile(parsed.score);
             
             // Expected AIR (assume 12 lakh students)
             const rank = Math.round((100 - expectedPercentile) / 100 * 1200000);
             
-            setPercentile(expectedPercentile.toFixed(2));
-            setAir(rank === 0 ? 1 : rank);
+            setPercentile(Math.min(100, Math.max(0, expectedPercentile)).toFixed(2));
+            setAir(rank <= 0 ? 1 : rank);
+
+            // Reward JEE Coins based on score (e.g. 50 coins for attempting + 2 per correct answer)
+            const earned = 50 + (parsed.correct * 2);
+            setCoinsEarned(earned);
+
+            // Update Real Firebase Data
+            const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    const userRef = doc(db, 'users', user.uid);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        const data = userSnap.data();
+                        const currentCoins = data.stats?.jeeCoins || 0;
+                        await updateDoc(userRef, {
+                            'stats.jeeCoins': currentCoins + earned
+                        });
+                    }
+                }
+            });
+            
+            return () => unsubscribe();
         } else {
             router.push('/dashboard');
         }
@@ -65,6 +95,12 @@ const MockResultsPage = () => {
                     <Target size={40} color="#3b82f6" style={{ margin: '0 auto' }} />
                     <h2>Total Score</h2>
                     <div className="score-text">{results.score} <span style={{fontSize: '1.5rem', color: '#64748b'}}>/ {results.maxScore}</span></div>
+                    {coinsEarned > 0 && (
+                        <div style={{ marginTop: '10px', background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(180,83,9,0.3))', padding: '10px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#fbbf24', fontWeight: 'bold' }}>
+                            <Coins size={20} />
+                            +{coinsEarned} JEE Coins Earned!
+                        </div>
+                    )}
                 </div>
 
                 <div className="card" style={{ textAlign: 'left' }}>

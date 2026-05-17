@@ -1,0 +1,26 @@
+{
+  "name": "JEE Solver AI",
+  "short_name": "JEE Solver",
+  "description": "The Ultimate AI Companion for IIT JEE Preparation",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/12104/12104065.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/12104/12104065.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

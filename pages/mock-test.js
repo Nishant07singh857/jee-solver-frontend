@@ -203,6 +203,23 @@ const MockTestPage = () => {
                     .palette-btn { width: 40px; height: 40px; border: none; cursor: pointer; font-weight: bold; display: flex; justify-content: center; align-items: center; }
                     .submit-section { padding: 15px; border-top: 1px solid #ccc; text-align: center; }
                     .btn-submit { background: #3b82f6; color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+                    /* Responsive Layout */
+                    @media (max-width: 1024px) {
+                        .main-content { flex-direction: column; overflow-y: auto; }
+                        .left-panel { flex: none; min-height: 60vh; margin-bottom: 0; }
+                        .right-panel { flex: none; margin: 10px; }
+                        .palette-grid { grid-template-columns: repeat(10, 1fr); }
+                        .bottom-bar { flex-wrap: wrap; gap: 10px; }
+                        .bottom-bar > div { width: 100%; display: flex; flex-wrap: wrap; gap: 5px; }
+                        .bottom-bar .btn { flex: 1 1 calc(33% - 5px); text-align: center; font-size: 0.85rem; padding: 10px 5px; white-space: nowrap; }
+                        .bottom-bar > button { width: 100%; margin-top: 10px; }
+                    }
+                    @media (max-width: 600px) {
+                        .palette-grid { grid-template-columns: repeat(6, 1fr); }
+                        .top-bar h2 { font-size: 1.1rem; }
+                        .timer-box { font-size: 1rem; }
+                        .status-legend { grid-template-columns: 1fr; }
+                    }
                 `}</style>
             </Head>
 
