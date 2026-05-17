@@ -2,7 +2,6 @@
 
 A production-grade, highly scalable web platform designed to help students conquer the Joint Entrance Examination (JEE) Main and Advanced. This platform combines an authentic NTA-style mock test environment with advanced AI doubt solving, infinite question generation, and deep performance analytics.
 
-## ✨ Billion-Dollar Features (India's First)
 
 - **🎙️ JARVIS Voice Mentor (Hinglish):** A floating, glowing AI orb that listens to your voice and explains complex physics/math concepts in natural Hindi/English (Hinglish) audio. Powered by Gemini 2.5 Flash & Web Speech API.
 - **⚔️ 1v1 Real-Time Ranked Battles:** Matchmaking system where students compete live on the same 5 questions. Fast answers give more points. Includes real-time synced timers and leaderboards.
