@@ -355,15 +355,24 @@ const ResultsPage = () => {
         { name: 'Correct', value: resultsData.correctAnswers },
         { name: 'Incorrect', value: resultsData.totalQuestions - resultsData.correctAnswers },
     ];
-    const COLORS = ['#22c55e', '#ef4444'];
+    const COLORS = ['#10b981', '#ef4444']; // Emerald and Red
+
+    // Determine Grade/Message
+    let grade = "";
+    let gradeColor = "";
+    if (scorePercentage >= 90) { grade = "Outstanding! 🏆"; gradeColor = "text-yellow-400"; }
+    else if (scorePercentage >= 75) { grade = "Great Job! 🌟"; gradeColor = "text-blue-400"; }
+    else if (scorePercentage >= 50) { grade = "Good Effort 👍"; gradeColor = "text-green-400"; }
+    else { grade = "Needs Practice 📚"; gradeColor = "text-orange-400"; }
 
     return (
         <>
             <Head>
                 <title>Quiz Results | JEE Solver</title>
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
             </Head>
 
+            {/* Interactive Background */}
             <canvas 
                 id="animation-canvas" 
                 ref={canvasRef} 
@@ -374,143 +383,180 @@ const ResultsPage = () => {
                     width: '100%',
                     height: '100%',
                     zIndex: 0,
-                    opacity: 0.3
+                    opacity: 0.6
                 }}
             ></canvas>
 
-            <div className="min-h-screen bg-slate-900 text-gray-200 font-sans p-4 sm:p-8 relative z-10">
+            <div className="min-h-screen relative z-10 font-sans p-4 sm:p-8 overflow-hidden">
+                {/* Floating ambient orbs */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}
-                    <header className="flex items-center justify-between mb-8">
+                    <header className="flex items-center justify-between mb-12">
                         <button 
                             onClick={handleDashboard} 
-                            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+                            className="flex items-center gap-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/5 transition-all"
                         >
                             <ArrowLeft size={18} />
                             Back to Dashboard
                         </button>
-                        <h1 className="text-3xl sm:text-4xl font-black text-white text-center">Quiz Results</h1>
-                        <div className="w-10"></div>
+                        <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 text-center uppercase tracking-wider">
+                            Mission Accomplished
+                        </h1>
+                        <div className="w-24"></div> {/* Spacer for centering */}
                     </header>
 
                     {/* Summary Section */}
-                    <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
                         {/* Score Card */}
-                        <div className="results-summary-card bg-white/5 border border-white/10 rounded-2xl p-6 text-center flex flex-col justify-center items-center">
-                            <Award size={40} className="text-yellow-400 mb-3" />
-                            <p className="text-5xl font-bold text-white">
-                                {scorePercentage}
-                                <span className="text-3xl text-gray-400">%</span>
-                            </p>
-                            <p className="text-lg text-gray-300">Your Score</p>
-                            <p className="text-sm text-gray-400 mt-2">
-                                {resultsData.quizTitle || "Quick Quiz"}
+                        <div className="results-summary-card relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-center flex flex-col justify-center items-center group">
+                            <div className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            
+                            <Award size={48} className="text-yellow-400 mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                            
+                            <div className="relative">
+                                <svg className="w-40 h-40 transform -rotate-90">
+                                    <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-700" />
+                                    <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="8" fill="transparent" 
+                                        strokeDasharray={440} 
+                                        strokeDashoffset={440 - (440 * scorePercentage) / 100}
+                                        className="text-blue-500 transition-all duration-1000 ease-out" 
+                                    />
+                                </svg>
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                                    <p className="text-4xl font-black text-white">{scorePercentage}<span className="text-2xl text-slate-400">%</span></p>
+                                </div>
+                            </div>
+                            
+                            <h3 className={`mt-6 text-xl font-bold ${gradeColor}`}>{grade}</h3>
+                            <p className="text-sm text-slate-400 mt-2 font-medium">
+                                {resultsData.quizTitle || "JEE Practice Session"}
                             </p>
                         </div>
 
                         {/* Stats Card */}
-                        <div className="results-summary-card bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-center gap-4">
-                            <div className="flex items-center gap-4">
-                                <Target size={24} className="text-blue-400" />
-                                <p className="text-lg">
-                                    Total Questions:{" "}
-                                    <span className="font-bold text-white">
-                                        {resultsData.totalQuestions}
-                                    </span>
-                                </p>
+                        <div className="results-summary-card bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 flex flex-col justify-center gap-6">
+                            <h3 className="text-xl font-bold text-white mb-2 border-b border-white/10 pb-4">Performance Metrics</h3>
+                            
+                            <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-500/20 rounded-lg"><Target size={20} className="text-blue-400" /></div>
+                                    <p className="text-slate-300 font-medium">Questions Attempted</p>
+                                </div>
+                                <span className="text-xl font-black text-white">{resultsData.totalQuestions}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <CheckCircle size={24} className="text-green-500" />
-                                <p className="text-lg">
-                                    Correct Answers:{" "}
-                                    <span className="font-bold text-white">
-                                        {resultsData.correctAnswers}
-                                    </span>
-                                </p>
+
+                            <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-emerald-500/20">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-emerald-500/20 rounded-lg"><CheckCircle size={20} className="text-emerald-400" /></div>
+                                    <p className="text-slate-300 font-medium">Correct Answers</p>
+                                </div>
+                                <span className="text-xl font-black text-emerald-400">{resultsData.correctAnswers}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <XCircle size={24} className="text-red-500" />
-                                <p className="text-lg">
-                                    Incorrect Answers:{" "}
-                                    <span className="font-bold text-white">
-                                        {resultsData.totalQuestions - resultsData.correctAnswers}
-                                    </span>
-                                </p>
+
+                            <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-red-500/20">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-red-500/20 rounded-lg"><XCircle size={20} className="text-red-400" /></div>
+                                    <p className="text-slate-300 font-medium">Incorrect Answers</p>
+                                </div>
+                                <span className="text-xl font-black text-red-400">{resultsData.totalQuestions - resultsData.correctAnswers}</span>
                             </div>
                         </div>
 
-                        {/* Pie Chart Card */}
-                        <div className="results-summary-card bg-white/5 border border-white/10 rounded-2xl p-6">
-                            <ResponsiveContainer width="100%" height={150}>
-                                <PieChart>
-                                    <Pie
-                                        data={pieChartData}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={60}
-                                        innerRadius={40}
-                                        paddingAngle={5}
-                                    >
-                                        {pieChartData.map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
-                                                stroke={COLORS[index % COLORS.length]}
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Legend iconType="circle" />
-                                </PieChart>
-                            </ResponsiveContainer>
+                        {/* Visual Breakdown Card */}
+                        <div className="results-summary-card bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 flex flex-col">
+                            <h3 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-4">Visual Breakdown</h3>
+                            <div className="flex-1 flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <PieChart>
+                                        <Pie
+                                            data={pieChartData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={80}
+                                            innerRadius={60}
+                                            paddingAngle={8}
+                                        >
+                                            {pieChartData.map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={COLORS[index % COLORS.length]}
+                                                    stroke="rgba(255,255,255,0.1)"
+                                                    strokeWidth={2}
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Legend 
+                                            iconType="circle" 
+                                            wrapperStyle={{ paddingTop: '20px' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </section>
 
                     {/* Detailed Question Review */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-white mb-6">Question Review</h2>
-                        <div className="space-y-4">
+                    <section className="mb-12">
+                        <div className="flex items-center gap-3 mb-8">
+                            <BookOpen size={24} className="text-blue-400" />
+                            <h2 className="text-2xl font-bold text-white">Comprehensive Analysis</h2>
+                        </div>
+                        
+                        <div className="grid gap-6">
                             {resultsData.questions &&
                                 resultsData.questions.map((q, index) => (
                                     <div
                                         key={index}
-                                        className={`question-review-card bg-white/5 border-l-4 rounded-lg p-5 ${
+                                        className={`question-review-card relative overflow-hidden bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 transition-all border-l-4 ${
                                             q.isCorrect
-                                                ? "border-green-500"
-                                                : "border-red-500"
+                                                ? "border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.05)] hover:bg-slate-800/80"
+                                                : "border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.05)] hover:bg-slate-800/80"
                                         }`}
                                     >
-                                        <p className="font-semibold text-lg text-white mb-3">
-                                            Q{index + 1}: {q.question}
-                                        </p>
-                                        <div className="space-y-2 text-md">
-                                            <p
-                                                className={`flex items-center gap-2 ${
-                                                    q.isCorrect
-                                                        ? "text-green-400"
-                                                        : "text-red-400"
-                                                }`}
-                                            >
+                                        <div className="flex gap-4">
+                                            <div className="flex-shrink-0 mt-1">
                                                 {q.isCorrect ? (
-                                                    <CheckCircle size={18} />
+                                                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                                        <CheckCircle size={18} className="text-emerald-400" />
+                                                    </div>
                                                 ) : (
-                                                    <XCircle size={18} />
+                                                    <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                                                        <XCircle size={18} className="text-red-400" />
+                                                    </div>
                                                 )}
-                                                Your Answer:{" "}
-                                                <span className="font-mono p-1 rounded bg-black/20">
-                                                    {q.userAnswer}
-                                                </span>
-                                            </p>
-                                            {!q.isCorrect && (
-                                                <p className="flex items-center gap-2 text-green-400">
-                                                    <CheckCircle size={18} />
-                                                    Correct Answer:{" "}
-                                                    <span className="font-mono p-1 rounded bg-black/20">
-                                                        {q.correctAnswer}
-                                                    </span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <span className="text-xs font-bold px-2 py-1 bg-slate-700 text-slate-300 rounded-md uppercase tracking-wider">Question {index + 1}</span>
+                                                    {!q.isCorrect && <span className="text-xs font-bold px-2 py-1 bg-red-500/20 text-red-400 rounded-md uppercase tracking-wider">Mistake to Review</span>}
+                                                </div>
+                                                <p className="font-semibold text-lg text-slate-100 mb-6 leading-relaxed">
+                                                    {q.question}
                                                 </p>
-                                            )}
+                                                
+                                                <div className="grid sm:grid-cols-2 gap-4">
+                                                    <div className={`p-4 rounded-xl border ${q.isCorrect ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+                                                        <p className="text-xs text-slate-400 font-medium mb-1 uppercase tracking-wider">Your Answer</p>
+                                                        <p className={`font-mono font-medium ${q.isCorrect ? 'text-emerald-300' : 'text-red-300'}`}>
+                                                            {q.userAnswer}
+                                                        </p>
+                                                    </div>
+
+                                                    {!q.isCorrect && (
+                                                        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                                            <p className="text-xs text-slate-400 font-medium mb-1 uppercase tracking-wider">Correct Answer</p>
+                                                            <p className="font-mono font-medium text-emerald-300">
+                                                                {q.correctAnswer}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -518,95 +564,38 @@ const ResultsPage = () => {
                     </section>
 
                     {/* Action Buttons */}
-                    <footer className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+                    <footer className="mt-12 flex flex-col sm:flex-row justify-center items-center gap-6 pb-12">
                         <button
                             onClick={handleRetry}
-                            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all"
+                            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-10 rounded-full flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.4)]"
                         >
-                            <Repeat size={18} /> Retry Quiz
+                            <Repeat size={20} /> Revise & Retry
                         </button>
                         <button
                             onClick={handleDashboard}
-                            className="w-full sm:w-auto bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all"
+                            className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-10 rounded-full flex items-center justify-center gap-3 transition-all hover:scale-105 border border-white/10"
                         >
-                            <LayoutDashboard size={18} /> Back to Dashboard
+                            <LayoutDashboard size={20} /> Return to Base
                         </button>
                     </footer>
                 </div>
             </div>
 
             <style jsx global>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-                
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-
                 body {
-                    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
-                    color: #f8fafc;
-                    min-height: 100vh;
-                    overflow-x: hidden;
+                    background: #020617;
                 }
-                
                 /* Custom scrollbar */
                 ::-webkit-scrollbar {
                     width: 8px;
                 }
-                
                 ::-webkit-scrollbar-track {
                     background: rgba(15, 23, 42, 0.5);
                 }
-                
                 ::-webkit-scrollbar-thumb {
-                    background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+                    background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
                     border-radius: 4px;
                 }
-                
-                ::-webkit-scrollbar-thumb:hover {
-                    background: linear-gradient(to bottom, #7c3aed, #0891b2);
-                }
-
-                /* Animations */
-                @keyframes float {
-                    0%, 100% {
-                        transform: translateY(0);
-                    }
-                    50% {
-                        transform: translateY(-10px);
-                    }
-                }
-
-                @keyframes spin {
-                    0% {
-                        transform: rotate(0deg);
-                    }
-                    100% {
-                        transform: rotate(360deg);
-                    }
-                }
-
-                /* Hover effects */
-                .results-summary-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-                        0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                }
-
-                /* Responsive design */
-                @media (max-width: 768px) {
-                    h1 {
-                        font-size: 2.2rem !important;
-                    }
-                }
-
-                .bg-white\\/5 {
-                    background-color: rgba(255, 255, 255, 0.05);
-                }
-
                 .border-white\\/10 {
                     border-color: rgba(255, 255, 255, 0.1);
                 }
